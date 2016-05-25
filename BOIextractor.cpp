@@ -38,6 +38,7 @@ void Occupancy(Point p4 , Point p3 , Point p2 , Point p1 , int laneNum , int blo
 void varianceCalculator(int a,int counter);
 void varOfVarCalculator(int blockNum,int laneNum);
 void shifter();
+void Vehicle_Counter(int frame_counter);
 int round(float a);
 
 
@@ -411,78 +412,13 @@ int main()
 			}
 		}
 
-		// Occupancy Counter 
+		// Vehicle Detection  
 		frame_counter++ ;
-        if((Vehicle_Track==1) && (frame_counter==1))
-        {
-        	cout<<"Entering the First frame"<<endl;
- 			for(h=0;h<numLanes;h++){
- 				for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i=i+4){
- 					if(isColored[1][h][i]|isColored[1][h][i+1]|isColored[1][h][i+2]|isColored[1][h][i+3])
- 						Vehicle_counter++ ;
- 				}
- 			}
-        }
-		if(Vehicle_Track){
-			for(h = 0 ; h < numLanes ; h++){
-				for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
-					//cout<<isColored[1][h][i]<<" ";
-					
-					if(isColored[1][h][i]){
-						if(isColored[0][h][i] == 0){
-							if(i!=0){
-								if(isColored[0][h][i-1]==0){
-									Vehicle_counter++ ;
-									//cout<<"Reason : previous frame previous block is zero"<<endl ;
-									if((isColored[1][h][i+1])|(isColored[1][h][i-1])){
-										Vehicle_counter-- ;
-										//cout<<"Decrement"<<endl ;
-
-									}
-								
-									//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
-
-								}
-
-							}
-							else{
-								Vehicle_counter++ ;
-								if(isColored[0][h][i+1])
-									Vehicle_counter-- ;
-								//cout<<"Reason : i = 0"<<endl  ;
-					//			if(isColored[1][h][i+1])
-									//Vehicle_counter-- ;
-								//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
-							}
-
-						}
-					}
-					
-					
-				}
-				//cout<<endl;
-			}
-		}
-		//	cout<<endl;
-			cout<<" Number of Vehicles "<<Vehicle_counter<<endl ;
-			for(h=0 ; h < numLanes ; h++){
-				for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
-					isColored[0][h][i] = isColored[1][h][i] ;
-				}
-			}
-		
-		/*
 		if(Vehicle_Track)
-		{
-			for(h=0 ; h<numLanes ; h++)
-			{
-				for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++) 
-				{
-					Occupancy(finalPoints[h][0][i+1],finalPoints[h][1][i+1],finalPoints[h][1][i],finalPoints[h][0][i],h,i) ;
-				}
-			}
-		}
-		*/
+			Vehicle_Counter(frame_counter);
+
+		cout<<"Vehicles passed : "<<Vehicle_counter<<endl;
+		
 		clock_t end = clock();
 		elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 		avg=avg+elapsed_secs;
@@ -501,20 +437,11 @@ int main()
 																						 // .
 																					  	 // .
 				line(img, finalPoints[h][0][i], finalPoints[h][0][i+1], 0 , 1, 8, 0) ;   // p2
-				//line(img, finalPoints[h][1][i], finalPoints[h][0][i], 0 , 1, 8, 0) ;
 			}
 		}
 
-		// Vehicle Count and Tracking
-		
-		/*
-		for(h=0 ; h<2*numLanes ; h++){
-			for(int i = 0 ; i < lEnd[i]-1 ; i++)
-				line(img, L[h][i], L[h][i+1], 0 , 1, 8, 0) ;
-		}
-		*/
         char text[255]; 
-        sprintf(text, "Vechicles Passed : %d", (int)Vehicle_counter);
+        sprintf(text, "Vehicles Passed : %d", (int)Vehicle_counter);
 
 		CvFont font;
 		cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, 1.0 ,1.0 ,0,1);
@@ -537,7 +464,6 @@ int main()
 	waitKey(0);
 
 }
-
 //Call back function(mouse clik detection)
 void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 {    
@@ -570,64 +496,6 @@ void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 	 input.close();
 
 }
-
-/*
-void Occupancy(Point p4 , Point p3 , Point p2 , Point p1 , int laneNum , int blockNum)
-{
-
-	//**********************************************************************
-	//		Please mark ROI in clockwise order
-	//**********************************************************************
-	//below indicates a BOI thatt is divided into 3
-	//  p4      p3
-	//   *       *
-	//   *       *
-	//  p1      p2
-    bool isColored = 1 ;
-	int pxl = p4.x ;     //leftmost x
-	int pxr = p3.x ;	//rightmost x
- 	int pyt = p4.y ;	// topmost y
- 	int pyb = p1.y ;	// bottommost y
-	if(pxl < p1.x)
-		pxl = p1.x ;
-
-	if(pxr > p2.x)
-		pxr = p2.x ;
-
-	if(pyt < p3.y)
-		pyt = p3.y ;
-
-	if(pyb > p2.y)
-		pyb = p2.y ;
-
-	//**************************************************
-	//      Final Developed Points
-	//**************************************************
-	
-	//    (pxl,pyt)*******(pxr,pyt)
-	//		  *	    		  *
-	//        *               *
-	//        *               *
-	//    (pxl,pyb)*******(pxr,pyb)
-
-	for(x = pxl + 1 ; x < pxr - 1 ; x++){
-		for(y = pyt + 1 ; y < pyb -1 ; y++) {
-			if(img.at<uchar>(y,x)!=255){
-				isColored = 0 ;
-				break ;
-			}
-		}
-		if(!isColored)
-			break ;
-	}
-
-	if(isColored){
-
-		occ_counter[h][i]++ ;
-	}
-
-}
-*/
 
 void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 {		
@@ -921,6 +789,64 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 
 	}
 
+}
+
+void Vehicle_Counter(int frame_counter)
+{
+	int h , i ; 
+	if((frame_counter==1))
+        {
+ 			for(h=0;h<numLanes;h++){
+ 				for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i=i+4){
+ 					if(isColored[1][h][i]|isColored[1][h][i+1]|isColored[1][h][i+2]|isColored[1][h][i+3])
+ 						Vehicle_counter++ ;
+ 				}
+ 			}
+        }
+		
+			for(h = 0 ; h < numLanes ; h++){
+				for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
+					//cout<<isColored[1][h][i]<<" ";
+					
+					if(isColored[1][h][i]){
+						if(isColored[0][h][i] == 0){
+							if(i!=0){
+								if(isColored[0][h][i-1]==0){
+									Vehicle_counter++ ;
+									//cout<<"Reason : previous frame previous block is zero"<<endl ;
+									if((isColored[1][h][i+1])|(isColored[1][h][i-1])){
+										Vehicle_counter-- ;
+										//cout<<"Decrement"<<endl ;
+
+									}
+								
+									//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
+
+								}
+
+							}
+							else{
+								Vehicle_counter++ ;
+								if(isColored[0][h][i+1])
+									Vehicle_counter-- ;
+								//cout<<"Reason : i = 0"<<endl  ;
+					//			if(isColored[1][h][i+1])
+									//Vehicle_counter-- ;
+								//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
+							}
+
+						}
+					}
+					
+					
+				}
+				
+			}
+			for(h=0 ; h < numLanes ; h++){
+				for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
+					isColored[0][h][i] = isColored[1][h][i] ;
+				}
+			}
 }
 
 //variance is calculate using the approximation method

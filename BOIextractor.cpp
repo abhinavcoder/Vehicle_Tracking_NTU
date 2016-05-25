@@ -46,7 +46,7 @@ const int numDivision = 4;
 const int virticalNumOfDivisions =3;
 const int numLanes = 4;
 
-Mat img,frame,background;
+Mat img,frame,background,prev_image , prev_prev_image ;
 Size s=Size(320,240);
 Point finalPoints[numLanes][2][numDivision*3+1];
 int backgroundVarOfVar[numLanes][numDivision*virticalNumOfDivisions]={0};
@@ -118,7 +118,8 @@ int main()
 		system("pause");
 		return -1;
 	}
-		
+	prev_image = img ;
+	prev_prev_image = img ;
 	resize(img,img,s);  
 	 
 	 
@@ -133,7 +134,7 @@ int main()
 	if(choice)
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
-		auto_input.open("Input_Points.txt") ;
+		auto_input.open("Input_Points2.txt") ;
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -180,11 +181,10 @@ int main()
 		}
     }
 
-
+    int frame_counter = 0 ;
 	while(1)	
 	{
 		bool capSuccess = cap.read(img);
-		
 		//check whether the image is loaded or not
 		if (!capSuccess) 
 		{
@@ -412,17 +412,34 @@ int main()
 		}
 
 		// Occupancy Counter 
-
+		frame_counter++ ;
+        if((Vehicle_Track==1) && (frame_counter==1))
+        {
+        	cout<<"Entering the First frame"<<endl;
+ 			for(h=0;h<numLanes;h++){
+ 				for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i=i+4){
+ 					if(isColored[1][h][i]|isColored[1][h][i+1]|isColored[1][h][i+2]|isColored[1][h][i+3])
+ 						Vehicle_counter++ ;
+ 				}
+ 			}
+        }
 		if(Vehicle_Track){
 			for(h = 0 ; h < numLanes ; h++){
 				for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
-					cout<<isColored[1][h][i]<<" ";
+					//cout<<isColored[1][h][i]<<" ";
 					
 					if(isColored[1][h][i]){
 						if(isColored[0][h][i] == 0){
 							if(i!=0){
 								if(isColored[0][h][i-1]==0){
 									Vehicle_counter++ ;
+									//cout<<"Reason : previous frame previous block is zero"<<endl ;
+									if((isColored[1][h][i+1])|(isColored[1][h][i-1])){
+										Vehicle_counter-- ;
+										//cout<<"Decrement"<<endl ;
+
+									}
+								
 									//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
 
 								}
@@ -430,6 +447,11 @@ int main()
 							}
 							else{
 								Vehicle_counter++ ;
+								if(isColored[0][h][i+1])
+									Vehicle_counter-- ;
+								//cout<<"Reason : i = 0"<<endl  ;
+					//			if(isColored[1][h][i+1])
+									//Vehicle_counter-- ;
 								//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
 							}
 
@@ -438,16 +460,17 @@ int main()
 					
 					
 				}
-				cout<<endl;
+				//cout<<endl;
 			}
-			cout<<endl;
+		}
+		//	cout<<endl;
 			cout<<" Number of Vehicles "<<Vehicle_counter<<endl ;
 			for(h=0 ; h < numLanes ; h++){
 				for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
 					isColored[0][h][i] = isColored[1][h][i] ;
 				}
 			}
-		}
+		
 		/*
 		if(Vehicle_Track)
 		{
@@ -490,15 +513,26 @@ int main()
 				line(img, L[h][i], L[h][i+1], 0 , 1, 8, 0) ;
 		}
 		*/
-		imshow("MyWindow",img); 
+        char text[255]; 
+        sprintf(text, "Vechicles Passed : %d", (int)Vehicle_counter);
 
-		waitKey();
-		// if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
-		// {
-		// 	cout << "esc key is pressed by user" << endl;
-		// 	break; 
-		// }
+		CvFont font;
+		cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, 1.0 ,1.0 ,0,1);
+
+		//putText (img, text, cvPoint(30,100), &font, cvScalar(255,255,0));
+		 putText(img, text, cvPoint(60,200), 
+          FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
 		
+		 imshow("Current_Image",img);
+		//imshow("Previous_Image",prev_image); 
+		//imshow("Previous_Previous_Image",prev_prev_image) ;
+		prev_prev_image = prev_image ;
+		prev_image = img ;
+		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
+		{
+			cout << "esc key is pressed by user" << endl;
+			break; 
+		}
 	}
 	waitKey(0);
 

@@ -34,6 +34,7 @@ float calB(Point p1,Point p2);
 float calC(Point p1,Point p2,float A,float B);
 bool detectPosivite(int a);
 void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum);
+void Occupancy(Point p4 , Point p3 , Point p2 , Point p1 , int laneNum , int blockNum) ;
 void varianceCalculator(int a,int counter);
 void varOfVarCalculator(int blockNum,int laneNum);
 void shifter();
@@ -64,7 +65,10 @@ float deltam,deltav;
 float m1=0,P=0,P1=0,u=0,Pl,var1=0;
 float W,W1,V=0,W11;
 
-	
+int occ_counter[numLanes][numDivision*virticalNumOfDivisions] = {0} ;
+int Vehicle_counter = 0 ;
+bool Vehicle_Track = 1 ; 	
+int isColored[2][numLanes][numDivision*virticalNumOfDivisions] = {0} ;
 int main()
 {
 	
@@ -393,14 +397,69 @@ int main()
 		//used to calculate time if needed
 		clock_t begin = clock();
 		//Calculating and concluding the current blocks status
+		for(h=0 ; h < numLanes ; h++){
+			for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
+					isColored[1][h][i] = 0 ;
+				}
+			}
+
 		for(h=0;h<numLanes;h++)
 		{
 			for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i++)
 			{
-
 				BOIprocessor(finalPoints[h][0][i+1],finalPoints[h][1][i+1],finalPoints[h][1][i],finalPoints[h][0][i],i,h);
 			}
 		}
+
+		// Occupancy Counter 
+
+		if(Vehicle_Track){
+			for(h = 0 ; h < numLanes ; h++){
+				for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
+					cout<<isColored[1][h][i]<<" ";
+					
+					if(isColored[1][h][i]){
+						if(isColored[0][h][i] == 0){
+							if(i!=0){
+								if(isColored[0][h][i-1]==0){
+									Vehicle_counter++ ;
+									//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
+
+								}
+
+							}
+							else{
+								Vehicle_counter++ ;
+								//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
+							}
+
+						}
+					}
+					
+					
+				}
+				cout<<endl;
+			}
+			cout<<endl;
+			cout<<" Number of Vehicles "<<Vehicle_counter<<endl ;
+			for(h=0 ; h < numLanes ; h++){
+				for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
+					isColored[0][h][i] = isColored[1][h][i] ;
+				}
+			}
+		}
+		/*
+		if(Vehicle_Track)
+		{
+			for(h=0 ; h<numLanes ; h++)
+			{
+				for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++) 
+				{
+					Occupancy(finalPoints[h][0][i+1],finalPoints[h][1][i+1],finalPoints[h][1][i],finalPoints[h][0][i],h,i) ;
+				}
+			}
+		}
+		*/
 		clock_t end = clock();
 		elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 		avg=avg+elapsed_secs;
@@ -408,7 +467,7 @@ int main()
 	//	printf("%f  %f	%f\n",elapsed_secs,1/elapsed_secs,avg/(float)tcounter);
 
 		// Creating the desired grid 
-		for(h=0;h<2*numLanes;h++)
+		for(h=0;h<numLanes;h++)
 		{
 			for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i++)
 			{
@@ -422,6 +481,8 @@ int main()
 				//line(img, finalPoints[h][1][i], finalPoints[h][0][i], 0 , 1, 8, 0) ;
 			}
 		}
+
+		// Vehicle Count and Tracking
 		
 		/*
 		for(h=0 ; h<2*numLanes ; h++){
@@ -431,41 +492,16 @@ int main()
 		*/
 		imshow("MyWindow",img); 
 
-		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
-		{
-			cout << "esc key is pressed by user" << endl;
-			break; 
-		}
+		waitKey();
+		// if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
+		// {
+		// 	cout << "esc key is pressed by user" << endl;
+		// 	break; 
+		// }
 		
 	}
 	waitKey(0);
 
-}
-
-//finding maximum of four points
-int findMax(int a,int b,int c,int d)
-{
-	int max = a;
-	if(b>max)
-		max=b;
-	if(c>max)
-		max=c;
-	if(d>max)
-		max=d;
-	return max;
-}
-
-//finding minimum of four points
-int findMin(int a,int b,int c,int d)
-{
-	int min = a;
-	if(b<min)
-		min=b;
-	if(c<min)
-		min=c;
-	if(d<min)
-		min=d;
-	return min;
 }
 
 //Call back function(mouse clik detection)
@@ -501,42 +537,63 @@ void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 
 }
 
-
-//coefficent A calculation of standard line equation
-float calA(Point p1,Point p2)
+/*
+void Occupancy(Point p4 , Point p3 , Point p2 , Point p1 , int laneNum , int blockNum)
 {
-	if(p1.x==p2.x)
-		return 1;
-	else if(p1.y==p2.y)
-		return 0;
-	else
-		 return (float)(p1.y-p2.y)/(p1.x-p2.x);
-}
 
-//coefficent B calculation of standard line equation
-float calB(Point p1,Point p2)
-{
-	if(p1.x==p2.x)
-		return 0 ;
-	else
-		return -1 ;
-}
+	//**********************************************************************
+	//		Please mark ROI in clockwise order
+	//**********************************************************************
+	//below indicates a BOI thatt is divided into 3
+	//  p4      p3
+	//   *       *
+	//   *       *
+	//  p1      p2
+    bool isColored = 1 ;
+	int pxl = p4.x ;     //leftmost x
+	int pxr = p3.x ;	//rightmost x
+ 	int pyt = p4.y ;	// topmost y
+ 	int pyb = p1.y ;	// bottommost y
+	if(pxl < p1.x)
+		pxl = p1.x ;
 
-//coefficent C calculation of standard line equation
-float calC(Point p1,Point p2,float A,float B)
-{
+	if(pxr > p2.x)
+		pxr = p2.x ;
+
+	if(pyt < p3.y)
+		pyt = p3.y ;
+
+	if(pyb > p2.y)
+		pyb = p2.y ;
+
+	//**************************************************
+	//      Final Developed Points
+	//**************************************************
 	
-	return -(A*p1.x+B*p1.y);
-}
+	//    (pxl,pyt)*******(pxr,pyt)
+	//		  *	    		  *
+	//        *               *
+	//        *               *
+	//    (pxl,pyb)*******(pxr,pyb)
 
-bool detectPosivite(int a)
-{
-	if(a>=0)
-		return true;
-	else
-		return false;
-}
+	for(x = pxl + 1 ; x < pxr - 1 ; x++){
+		for(y = pyt + 1 ; y < pyb -1 ; y++) {
+			if(img.at<uchar>(y,x)!=255){
+				isColored = 0 ;
+				break ;
+			}
+		}
+		if(!isColored)
+			break ;
+	}
 
+	if(isColored){
+
+		occ_counter[h][i]++ ;
+	}
+
+}
+*/
 
 void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 {		
@@ -711,6 +768,7 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 
 		//NCC calculation
 		
+		
 		if(occ>0.3)
 		{
 			shadow=0;
@@ -791,7 +849,7 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 			n=(float)shadow/(float)forgroundCounter;
 
 			
-			if((n<=0.9))
+            //if((n<=0.9))
 			{
 				for(y=0;y<rows;y++)
 				{
@@ -811,8 +869,9 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 							if(detectPosivite(X[0])==detectPosivite(line1P3) && detectPosivite(X[1])==detectPosivite(line2P1) &&
 							   detectPosivite(X[2])==detectPosivite(line3P1) && detectPosivite(X[3])==detectPosivite(line4P2))
 							{
-					
+									
 									img.at<uchar>(y,x)=255;
+									isColored[1][laneNum][blockNum] = 1 ;
 					
 							}
 				
@@ -821,6 +880,7 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 					}
 				}
 			}
+			
 			
 		}
 
@@ -895,6 +955,42 @@ void varOfVarCalculator(int blockNum,int laneNum)
 	var=total/(i-1); 
 	backgroundVarOfVar[laneNum][blockNum]=var;
 }
+
+//coefficent A calculation of standard line equation
+float calA(Point p1,Point p2)
+{
+	if(p1.x==p2.x)
+		return 1;
+	else if(p1.y==p2.y)
+		return 0;
+	else
+		 return (float)(p1.y-p2.y)/(p1.x-p2.x);
+}
+
+//coefficent B calculation of standard line equation
+float calB(Point p1,Point p2)
+{
+	if(p1.x==p2.x)
+		return 0 ;
+	else
+		return -1 ;
+}
+
+//coefficent C calculation of standard line equation
+float calC(Point p1,Point p2,float A,float B)
+{
+	
+	return -(A*p1.x+B*p1.y);
+}
+
+bool detectPosivite(int a)
+{
+	if(a>=0)
+		return true;
+	else
+		return false;
+}
+
 //rounding off function
 int round(float a)
 {
@@ -916,4 +1012,30 @@ int round(float a)
 	}
 	else
 		return 0;
+}
+
+//finding maximum of four points
+int findMax(int a,int b,int c,int d)
+{
+	int max = a;
+	if(b>max)
+		max=b;
+	if(c>max)
+		max=c;
+	if(d>max)
+		max=d;
+	return max;
+}
+
+//finding minimum of four points
+int findMin(int a,int b,int c,int d)
+{
+	int min = a;
+	if(b<min)
+		min=b;
+	if(c<min)
+		min=c;
+	if(d<min)
+		min=d;
+	return min;
 }

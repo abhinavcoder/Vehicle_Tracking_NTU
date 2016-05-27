@@ -47,7 +47,7 @@ const int numDivision = 4;
 const int virticalNumOfDivisions =3;
 const int numLanes = 4;
 
-Mat img,frame,background,prev_image , prev_prev_image ;
+Mat img,frame,background;
 Size s=Size(320,240);
 Point finalPoints[numLanes][2][numDivision*3+1];
 int backgroundVarOfVar[numLanes][numDivision*virticalNumOfDivisions]={0};
@@ -70,6 +70,8 @@ int occ_counter[numLanes][numDivision*virticalNumOfDivisions] = {0} ;
 int Vehicle_counter = 0 ;
 bool Vehicle_Track = 1 ; 	
 int isColored[2][numLanes][numDivision*virticalNumOfDivisions] = {0} ;
+
+float maxfx = 0.0037 ;
 int main()
 {
 	
@@ -119,8 +121,7 @@ int main()
 		system("pause");
 		return -1;
 	}
-	prev_image = img ;
-	prev_prev_image = img ;
+
 	resize(img,img,s);  
 	 
 	 
@@ -338,12 +339,17 @@ int main()
 
 				//firthure division to horizontal blocks
 				
+				// Toggle following  " for loop " to create 3 horizontal divisons in the block 
+				
+				/*
 				for(i=0;i<realNumDivision[h/2]+1;i++)
 				{
 					xInc=(finalPoints[h/2][1][i*virticalNumOfDivisions].x-finalPoints[h/2][0][i*virticalNumOfDivisions].x)/3;
 					finalPoints[h/2][1][i*virticalNumOfDivisions].x=finalPoints[h/2][0][i*virticalNumOfDivisions].x+2*xInc;
 					finalPoints[h/2][0][i*virticalNumOfDivisions].x=finalPoints[h/2][0][i*virticalNumOfDivisions].x+xInc;
 				}
+				*/
+
 				//dividing each block into virtically to equal 3 blocks to finish BOI
 				
 				for(j=0;j<2;j++)
@@ -451,10 +457,7 @@ int main()
           FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
 		
 		 imshow("Current_Image",img);
-		//imshow("Previous_Image",prev_image); 
-		//imshow("Previous_Previous_Image",prev_prev_image) ;
-		prev_prev_image = prev_image ;
-		prev_image = img ;
+		 
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -648,7 +651,10 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 	if(backgroundDone)
 	{		
 		//deltaV calculation
-		float deltaV;
+		float deltaV , PV ;
+		
+		// Old implementation 
+		
 		if(varM[laneNum][blockNum]>varI[laneNum][blockNum])
 		{
 			deltaV=(varM[laneNum][blockNum]-varI[laneNum][blockNum])/varM[laneNum][blockNum];
@@ -667,11 +673,28 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 		float occ;
 
 		occ= (2*deltaV*(float)fgPersentage)/(deltaV+(float)fgPersentage);
+		PV = occ ;
+		
 
-		//NCC calculation
+		// New Kratika's implementation
 		
+		// deltaV = fabs(varM[laneNum][blockNum] - varI[laneNum][blockNum]) ;
+
+		// float fx =  (1/267.798)*exp(-deltav/267.798) ;
+        
+  //       if (fx > maxfx)
+  //           maxfx = fx;
+        
+  //       PV = 1 - (fx/maxfx);
+        
+
+		// //NCC calculation
 		
-		if(occ>0.3)
+		// cout<<"deltaV : "<<deltav<<" fx :"<<fx<<endl ;
+		// cout<<"maxfx : "<<maxfx<<" PV : "<<PV<<endl<<endl ;
+
+
+		if(PV>0.3)
 		{
 			shadow=0;
 			for(y=0;y<rows;y++)

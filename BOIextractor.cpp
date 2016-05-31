@@ -20,9 +20,27 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <queue>
+#include <deque>
+#include <algorithm>
+#include <map>
 
 using namespace cv;
 using namespace std;
+
+template<typename T, typename Container=std::deque<T> >
+class iterable_queue : public std::queue<T,Container>
+{
+public:
+    typedef typename Container::iterator iterator;
+    typedef typename Container::const_iterator const_iterator;
+
+    iterator begin() { return this->c.begin(); }
+    iterator end() { return this->c.end(); }
+    const_iterator begin() const { return this->c.begin(); }
+    const_iterator end() const { return this->c.end(); }
+};
+
 
 
 //		function initialisation
@@ -46,6 +64,9 @@ int round(float a);
 const int numDivision = 4;
 const int virticalNumOfDivisions =3;
 const int numLanes = 4;
+
+iterable_queue< pair< int , int > > Track[numLanes] ;
+map< pair<int , int> , pair<int , int> > GridMap ; 
 
 Mat img,frame,background;
 Size s=Size(320,240);
@@ -381,9 +402,11 @@ int main()
 			// used to wait till the full background is compleated
 				for(i=0;i<realNumDivision[h/2]*virticalNumOfDivisions;i++)
 				{
+					GridMap[make_pair(h/2,i)] = make_pair((finalPoints[h/2][0][i].x + finalPoints[h/2][1][i].x)/2 , (finalPoints[h/2][0][i+1].y + finalPoints[h/2][1][i].y)/2) ;
 					BOIprocessor(finalPoints[h/2][0][i+1],finalPoints[h/2][1][i+1],finalPoints[h/2][1][i],finalPoints[h/2][0][i],i,h/2);
 				}
 			}
+
 			backDoneCounter=0;
 			for(i=0;i<numLanes;i++)
 			{
@@ -423,7 +446,7 @@ int main()
 		if(Vehicle_Track)
 			Vehicle_Counter(frame_counter);
 
-		cout<<"Vehicles passed : "<<Vehicle_counter<<endl;
+		// cout<<"Vehicles passed : "<<Vehicle_counter<<endl;
 		
 		clock_t end = clock();
 		elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -455,14 +478,33 @@ int main()
 		//putText (img, text, cvPoint(30,100), &font, cvScalar(255,255,0));
 		 putText(img, text, cvPoint(60,200), 
           FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
-		
+
+		 char text1[100][255] ;
+		 int c = 0  ;
+        for(h = 0 ; h < numLanes ; h++)
+        {	
+        	cout<<"Lane : "<<h<<" :: " ;
+        for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
+        {
+        	cout<<(*it).first<<"--->"<<(*it).second<<"("<<GridMap[*it].first<<","<<GridMap[*it].second<<")"<<" : ";
+           sprintf(text1[c], "V%d", (int)((*it).first));
+           putText(img, text1[c], cvPoint(GridMap[make_pair(h,(*it).second)].first,GridMap[make_pair(h,(*it).second)].second), 
+          FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
+
+          c++ ;
+        }
+        cout<<endl ;
+        
+        }
+
 		 imshow("Current_Image",img);
-		 
-		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
-		{
-			cout << "esc key is pressed by user" << endl;
-			break; 
-		}
+		waitKey() ;
+
+		// if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
+		// {
+		// 	cout << "esc key is pressed by user" << endl;
+		// 	break; 
+		// }
 	}
 	waitKey(0);
 
@@ -652,6 +694,7 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 	{		
 		//deltaV calculation
 		float deltaV , PV ;
+		float thresh ;
 		
 		// Old implementation 
 		
@@ -674,27 +717,29 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 
 		occ= (2*deltaV*(float)fgPersentage)/(deltaV+(float)fgPersentage);
 		PV = occ ;
+		thresh = 0.3 ;
 		
 
 		// New Kratika's implementation
 		
 		// deltaV = fabs(varM[laneNum][blockNum] - varI[laneNum][blockNum]) ;
 
-		// float fx =  (1/267.798)*exp(-deltav/267.798) ;
+		// float fx =  (1/267.798)*exp(-deltaV/267.798) ;
         
   //       if (fx > maxfx)
   //           maxfx = fx;
         
   //       PV = 1 - (fx/maxfx);
-        
+  //       thresh = 0.88 ;
 
 		// //NCC calculation
 		
-		// cout<<"deltaV : "<<deltav<<" fx :"<<fx<<endl ;
+		// cout<<"deltaV : "<<deltaV<<" fx :"<<fx<<endl ;
 		// cout<<"maxfx : "<<maxfx<<" PV : "<<PV<<endl<<endl ;
 
+		// threshold , 0.9 : Kratika's code :: 0.3 earlier code 
 
-		if(PV>0.3)
+		if(PV>thresh)
 		{
 			shadow=0;
 			for(y=0;y<rows;y++)
@@ -817,59 +862,126 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 void Vehicle_Counter(int frame_counter)
 {
 	int h , i ; 
+
+	// Write code for lane change 
+
 	if((frame_counter==1))
         {
  			for(h=0;h<numLanes;h++){
  				for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i=i+4){
- 					if(isColored[1][h][i]|isColored[1][h][i+1]|isColored[1][h][i+2]|isColored[1][h][i+3])
+ 					if(isColored[1][h][i] | isColored[1][h][i+1] | isColored[1][h][i+2] | isColored[1][h][i+3])
+ 					{
  						Vehicle_counter++ ;
+ 						if(isColored[1][h][i])
+ 							Track[h].push(make_pair(Vehicle_counter,i)) ;
+ 						if(isColored[1][h][i+1])
+ 							Track[h].push(make_pair(Vehicle_counter,i+1)) ; 
+ 						if(isColored[1][h][i+2])
+ 							Track[h].push(make_pair(Vehicle_counter,i+2)) ;					
+ 						if(isColored[1][h][i+3])
+ 							Track[h].push(make_pair(Vehicle_counter,i+3)) ;															
+ 					}
  				}
- 			}
+        	}
         }
 		
-			for(h = 0 ; h < numLanes ; h++){
-				for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
-					//cout<<isColored[1][h][i]<<" ";
-					
-					if(isColored[1][h][i]){
-						if(isColored[0][h][i] == 0){
-							if(i!=0){
-								if(isColored[0][h][i-1]==0){
+	for(h = 0 ; h < numLanes ; h++){
+		for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
+			if(isColored[1][h][i]){
+					if(isColored[0][h][i] == 0){
+						if(i!=0){
+							if(isColored[0][h][i-1]==0){
+								if(!((isColored[1][h][i+1])|(isColored[1][h][i-1]))){
 									Vehicle_counter++ ;
-									//cout<<"Reason : previous frame previous block is zero"<<endl ;
-									if((isColored[1][h][i+1])|(isColored[1][h][i-1])){
-										Vehicle_counter-- ;
-										//cout<<"Decrement"<<endl ;
-
-									}
-								
-									//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
-
+									Track[h].push(make_pair(Vehicle_counter,i)) ;
 								}
-
 							}
-							else{
-								Vehicle_counter++ ;
-								if(isColored[0][h][i+1])
-									Vehicle_counter-- ;
-								//cout<<"Reason : i = 0"<<endl  ;
-					//			if(isColored[1][h][i+1])
-									//Vehicle_counter-- ;
-								//cout<<"Number of Vechiles :: "<<Vehicle_counter<<endl ;
-							}
-
 						}
+						else{
+							if(!(isColored[0][h][i+1])){
+								Vehicle_counter++ ;
+								Track[h].push(make_pair(Vehicle_counter,i)) ;
+							}
+						}
+
 					}
-					
-					
-				}
-				
 			}
+		
+		}
+				
+	}
+
+	// Popping out of the vehicle queue 
+	for(h = 0 ; h < numLanes ; h++){
+		i = realNumDivision[h]*virticalNumOfDivisions - 2 ;
+		if(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))&&(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))))
+			Track[h].pop() ;
+	}
+
+	int TrackNew[numLanes][2*virticalNumOfDivisions] ;
+
+	
+ 	for(h = 0 ; h < numLanes ; h ++){
+ 		for( i = 0 ; i < 2*virticalNumOfDivisions ; i++)
+ 			TrackNew[h][i] = 100 ;
+ 	}
+	// Tracking the vehicles 
+
+    int counter = 0 ; 
+    // get the new position of the cars 
+	for(h=0;h<numLanes;h++){
+		counter = 0 ;
+		i = 0 ; 
+		while(i < realNumDivision[h]*virticalNumOfDivisions){
+			if(isColored[1][h][i]){
+				int k = 0; 
+				while(isColored[1][h][i+k])
+					k++ ;
+				TrackNew[h][counter] = i + k - 1 ;
+				i = i+k ;
+				counter++ ; 
+			}
+			else 
+				i++ ; 
+		}
+
+ 		sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions);
+ 		
+ 	}
+
+ 	// cout<<"Another matrix"<<endl ;
+ 	// for(h = 0 ; h < numLanes ; h ++){
+ 	// 	for( i = 0 ; i < 2*virticalNumOfDivisions ; i++)
+ 	// 		cout<<TrackNew[h][i]<<" , " ;
+ 	// 	cout<<endl ;
+ 	// }
+
+ //   cout<<"Tracking starts"<<endl;
+    for(h = 0 ; h < numLanes ; h++)
+    {	
+    	counter = 0 ; 
+    //	cout<<"Lane no. "<<h<<" :: ";
+        for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
+        {
+          if(counter!=100){
+          	(*it).second = TrackNew[h][counter] ;
+            counter++ ;
+          }
+      //	  cout<<(*it).first<<"-->"<<(*it).second<<" : ";
+
+        }
+    //    cout<<endl;
+    }	
+ //   cout<<"Tracking ends"<<endl ;
+
 			for(h=0 ; h < numLanes ; h++){
 				for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
 					isColored[0][h][i] = isColored[1][h][i] ;
 				}
 			}
+
+
+
 }
 
 //variance is calculate using the approximation method

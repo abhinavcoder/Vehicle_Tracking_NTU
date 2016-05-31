@@ -402,6 +402,7 @@ int main()
 			// used to wait till the full background is compleated
 				for(i=0;i<realNumDivision[h/2]*virticalNumOfDivisions;i++)
 				{
+					// Mapping the grid to original coordinates
 					GridMap[make_pair(h/2,i)] = make_pair((finalPoints[h/2][0][i].x + finalPoints[h/2][1][i].x)/2 , (finalPoints[h/2][0][i+1].y + finalPoints[h/2][1][i].y)/2) ;
 					BOIprocessor(finalPoints[h/2][0][i+1],finalPoints[h/2][1][i+1],finalPoints[h/2][1][i],finalPoints[h/2][0][i],i,h/2);
 				}
@@ -498,7 +499,7 @@ int main()
         }
 
 		 imshow("Current_Image",img);
-		waitKey() ;
+		 waitKey() ;
 
 		// if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		// {
@@ -872,6 +873,7 @@ void Vehicle_Counter(int frame_counter)
  					if(isColored[1][h][i] | isColored[1][h][i+1] | isColored[1][h][i+2] | isColored[1][h][i+3])
  					{
  						Vehicle_counter++ ;
+ 						cout<<"*********** In lane :: "<<h<<" block :: "<<i<<endl;
  						if(isColored[1][h][i])
  							Track[h].push(make_pair(Vehicle_counter,i)) ;
  						if(isColored[1][h][i+1])
@@ -893,6 +895,7 @@ void Vehicle_Counter(int frame_counter)
 							if(isColored[0][h][i-1]==0){
 								if(!((isColored[1][h][i+1])|(isColored[1][h][i-1]))){
 									Vehicle_counter++ ;
+									cout<<"*********** In lane :: "<<h<<" block :: "<<i<<endl;
 									Track[h].push(make_pair(Vehicle_counter,i)) ;
 								}
 							}
@@ -900,6 +903,7 @@ void Vehicle_Counter(int frame_counter)
 						else{
 							if(!(isColored[0][h][i+1])){
 								Vehicle_counter++ ;
+								cout<<"*********** In lane :: "<<h<<" block :: "<<i<<endl;
 								Track[h].push(make_pair(Vehicle_counter,i)) ;
 							}
 						}
@@ -915,6 +919,9 @@ void Vehicle_Counter(int frame_counter)
 	for(h = 0 ; h < numLanes ; h++){
 		i = realNumDivision[h]*virticalNumOfDivisions - 2 ;
 		if(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))&&(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))))
+			Track[h].pop() ;
+
+		if(Track[h].front().second == 100)
 			Track[h].pop() ;
 	}
 
@@ -949,12 +956,12 @@ void Vehicle_Counter(int frame_counter)
  		
  	}
 
- 	// cout<<"Another matrix"<<endl ;
- 	// for(h = 0 ; h < numLanes ; h ++){
- 	// 	for( i = 0 ; i < 2*virticalNumOfDivisions ; i++)
- 	// 		cout<<TrackNew[h][i]<<" , " ;
- 	// 	cout<<endl ;
- 	// }
+ 	cout<<"Another matrix"<<endl ;
+ 	for(h = 0 ; h < numLanes ; h ++){
+ 		for( i = 0 ; i < 2*virticalNumOfDivisions ; i++)
+ 			cout<<TrackNew[h][i]<<" , " ;
+ 		cout<<endl ;
+ 	}
 
  //   cout<<"Tracking starts"<<endl;
     for(h = 0 ; h < numLanes ; h++)
@@ -963,10 +970,10 @@ void Vehicle_Counter(int frame_counter)
     //	cout<<"Lane no. "<<h<<" :: ";
         for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {
-          if(counter!=100){
+         // if(TrackNew[h][counter]!=100){
           	(*it).second = TrackNew[h][counter] ;
             counter++ ;
-          }
+          //}
       //	  cout<<(*it).first<<"-->"<<(*it).second<<" : ";
 
         }

@@ -68,6 +68,8 @@ const int numLanes = 4;
 iterable_queue< pair< int , int > > Track[numLanes] ;
 map< pair<int , int> , pair<int , int> > GridMap ; 
 
+bool wayToSort(int i , int j){ return i > j ;}
+
 Mat img,frame,background;
 Size s=Size(320,240);
 Point finalPoints[numLanes][2][numDivision*3+1];
@@ -449,10 +451,11 @@ int main()
 
 		// cout<<"Vehicles passed : "<<Vehicle_counter<<endl;
 		
-		clock_t end = clock();
-		elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-		avg=avg+elapsed_secs;
-		tcounter++;
+		// clock_t end = clock();
+		// elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+		// avg=avg+elapsed_secs;
+		// tcounter++;
+
 	//	printf("%f  %f	%f\n",elapsed_secs,1/elapsed_secs,avg/(float)tcounter);
 
 		// Creating the desired grid 
@@ -499,13 +502,13 @@ int main()
         }
 
 		 imshow("Current_Image",img);
-		 waitKey() ;
+		// waitKey() ;
 
-		// if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
-		// {
-		// 	cout << "esc key is pressed by user" << endl;
-		// 	break; 
-		// }
+		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
+		{
+			cout << "esc key is pressed by user" << endl;
+			break; 
+		}
 	}
 	waitKey(0);
 
@@ -873,7 +876,6 @@ void Vehicle_Counter(int frame_counter)
  					if(isColored[1][h][i] | isColored[1][h][i+1] | isColored[1][h][i+2] | isColored[1][h][i+3])
  					{
  						Vehicle_counter++ ;
- 						cout<<"*********** In lane :: "<<h<<" block :: "<<i<<endl;
  						if(isColored[1][h][i])
  							Track[h].push(make_pair(Vehicle_counter,i)) ;
  						if(isColored[1][h][i+1])
@@ -895,7 +897,6 @@ void Vehicle_Counter(int frame_counter)
 							if(isColored[0][h][i-1]==0){
 								if(!((isColored[1][h][i+1])|(isColored[1][h][i-1]))){
 									Vehicle_counter++ ;
-									cout<<"*********** In lane :: "<<h<<" block :: "<<i<<endl;
 									Track[h].push(make_pair(Vehicle_counter,i)) ;
 								}
 							}
@@ -903,7 +904,6 @@ void Vehicle_Counter(int frame_counter)
 						else{
 							if(!(isColored[0][h][i+1])){
 								Vehicle_counter++ ;
-								cout<<"*********** In lane :: "<<h<<" block :: "<<i<<endl;
 								Track[h].push(make_pair(Vehicle_counter,i)) ;
 							}
 						}
@@ -921,7 +921,7 @@ void Vehicle_Counter(int frame_counter)
 		if(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))&&(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))))
 			Track[h].pop() ;
 
-		if(Track[h].front().second == 100)
+		if(Track[h].front().second == -1)
 			Track[h].pop() ;
 	}
 
@@ -930,7 +930,7 @@ void Vehicle_Counter(int frame_counter)
 	
  	for(h = 0 ; h < numLanes ; h ++){
  		for( i = 0 ; i < 2*virticalNumOfDivisions ; i++)
- 			TrackNew[h][i] = 100 ;
+ 			TrackNew[h][i] = -1 ;
  	}
 	// Tracking the vehicles 
 
@@ -952,16 +952,16 @@ void Vehicle_Counter(int frame_counter)
 				i++ ; 
 		}
 
- 		sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions);
+ 		sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions , wayToSort);
  		
  	}
 
- 	cout<<"Another matrix"<<endl ;
- 	for(h = 0 ; h < numLanes ; h ++){
- 		for( i = 0 ; i < 2*virticalNumOfDivisions ; i++)
- 			cout<<TrackNew[h][i]<<" , " ;
- 		cout<<endl ;
- 	}
+ 	// cout<<"Another matrix"<<endl ;
+ 	// for(h = 0 ; h < numLanes ; h ++){
+ 	// 	for( i = 0 ; i < 2*virticalNumOfDivisions ; i++)
+ 	// 		cout<<TrackNew[h][i]<<" , " ;
+ 	// 	cout<<endl ;
+ 	// }
 
  //   cout<<"Tracking starts"<<endl;
     for(h = 0 ; h < numLanes ; h++)

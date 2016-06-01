@@ -1,6 +1,14 @@
-// BOIextractor.cpp : Defines the entry point for the console application.
-//
+// main.cpp : Defines the entry point for the console application
 
+/************************************************/
+// Name: Kumar Abhinav
+// Project Topic: Vehicle Tracking using BOI 
+// Supervisor: Kratika Garg
+// Dates: 9 May to 15 July
+// Contact : abhinaviitkgp1994@gmail.com
+/************************************************/
+
+#include <iostream>
 #include "opencv2/core/core_c.h"
 #include "opencv2/core/core.hpp"
 #include "opencv2/flann/miniflann.hpp"
@@ -14,7 +22,6 @@
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/contrib/contrib.hpp"
-#include <iostream>
 #include "math.h"
 #include <ctime>
 #include <fstream>
@@ -27,6 +34,10 @@
 
 using namespace cv;
 using namespace std;
+
+/********************************************/
+// Definition of STL : Deque (with iteration)
+/********************************************/
 
 template<typename T, typename Container=std::deque<T> >
 class iterable_queue : public std::queue<T,Container>
@@ -42,8 +53,10 @@ public:
 };
 
 
+/*************************/
+// Function initialisation
+/*************************/
 
-//		function initialisation
 void CallBackFunc(int event, int x, int y, int flags, void* ptr);
 int findMax(int a,int b,int c,int d);
 int findMin(int a,int b,int c,int d);
@@ -59,16 +72,18 @@ void shifter();
 void Vehicle_Counter(int frame_counter);
 int round(float a);
 
+bool wayToSort(int i , int j){ return i > j ;}
 
-//      global variables
+/******************/
+// Global variables
+/******************/
+
 const int numDivision = 4;
 const int virticalNumOfDivisions =3;
-const int numLanes = 4;
+const int numLanes = 4;                 
 
 iterable_queue< pair< int , int > > Track[numLanes] ;
 map< pair<int , int> , pair<int , int> > GridMap ; 
-
-bool wayToSort(int i , int j){ return i > j ;}
 
 Mat img,frame,background;
 Size s=Size(320,240);
@@ -95,25 +110,26 @@ bool Vehicle_Track = 1 ;
 int isColored[2][numLanes][numDivision*virticalNumOfDivisions] = {0} ;
 
 float maxfx = 0.0037 ;
+
+//*************************/
+// Main function definition
+/**************************/
+
 int main()
 {
-	
-
-	//******************Diplaying inputting image************************
-	VideoCapture cap("Video.avi"); // open the video file for reading
-
-    if(!cap.isOpened())  // if not success, exit program
+	VideoCapture cap("./Videos/Video.avi"); // open the video file for reading
+	if(!cap.isOpened())  // if not success, exit program
 	{
 		cout << "Cannot open the video file" << endl;
 		return -1;
 	}
-	
     namedWindow("MyWindow",CV_WINDOW_AUTOSIZE); //create a window called "MyVideo"
-	//*************************************************************
+    // File reading
     ofstream input;
 	input.open("input.txt",std::fstream::app);
 	input<<"*******************************************"<<endl;
 	input.close() ;
+	
 	int type =img.type();
 	background=Mat(s,type,Scalar::all(0));
 	
@@ -145,11 +161,14 @@ int main()
 		return -1;
 	}
 
+	// Resizing the image into desired resolution
 	resize(img,img,s);  
-	 
-	 
 	//greyscaling
 	cvtColor(img,img,CV_BGR2GRAY);
+
+	/*********************************************/
+	// Input of points for calibration of Lanes 
+	/*********************************************/
 
 	// Automatic input of lines choice 
 	cout<<"Do you want to Load the line points input (True / False)"<<endl ;
@@ -207,6 +226,8 @@ int main()
     }
 
     int frame_counter = 0 ;
+
+    // Video Processing starts 
 	while(1)	
 	{
 		bool capSuccess = cap.read(img);
@@ -220,12 +241,13 @@ int main()
 		
 		// resizing to 240x320
 		resize(img,img,s);  
-	 
-	 
 		//greyscaling
 		cvtColor(img,img,CV_BGR2GRAY);
-			 
-	
+		
+		/**************************************************************/
+		// Getting the desired coordinates of the block after processing
+		/**************************************************************/
+		
 		if(!backgroundDone)
 		{
 			
@@ -360,10 +382,12 @@ int main()
 					}
 				}
 
-				//firthure division to horizontal blocks
+				//furthure division to horizontal blocks
 				
+				/****************************************************************************/
 				// Toggle following  " for loop " to create 3 horizontal divisons in the block 
-				
+				/****************************************************************************/
+
 				/*
 				for(i=0;i<realNumDivision[h/2]+1;i++)
 				{
@@ -401,11 +425,12 @@ int main()
 				}
 				
 			
-			// used to wait till the full background is compleated
+			    // used to wait till the full background is compleated
 				for(i=0;i<realNumDivision[h/2]*virticalNumOfDivisions;i++)
 				{
-					// Mapping the grid to original coordinates
+					// Mapping the grid to original coordinates in image 2D plane
 					GridMap[make_pair(h/2,i)] = make_pair((finalPoints[h/2][0][i].x + finalPoints[h/2][1][i].x)/2 , (finalPoints[h/2][0][i+1].y + finalPoints[h/2][1][i].y)/2) ;
+					// Processing for background update and occupancy counter 
 					BOIprocessor(finalPoints[h/2][0][i+1],finalPoints[h/2][1][i+1],finalPoints[h/2][1][i],finalPoints[h/2][0][i],i,h/2);
 				}
 			}
@@ -444,21 +469,25 @@ int main()
 			}
 		}
 
-		// Vehicle Detection  
+		/*********************************************/
+		// Vehicle counting and tracking  
+		/*********************************************/  
+
 		frame_counter++ ;
 		if(Vehicle_Track)
 			Vehicle_Counter(frame_counter);
 
 		// cout<<"Vehicles passed : "<<Vehicle_counter<<endl;
-		
 		// clock_t end = clock();
 		// elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 		// avg=avg+elapsed_secs;
 		// tcounter++;
+		//	printf("%f  %f	%f\n",elapsed_secs,1/elapsed_secs,avg/(float)tcounter);
 
-	//	printf("%f  %f	%f\n",elapsed_secs,1/elapsed_secs,avg/(float)tcounter);
+		/*********************************************/
+		// Generating the grid on image 
+		/*********************************************/
 
-		// Creating the desired grid 
 		for(h=0;h<numLanes;h++)
 		{
 			for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i++)
@@ -472,6 +501,10 @@ int main()
 				line(img, finalPoints[h][0][i], finalPoints[h][0][i+1], 0 , 1, 8, 0) ;   // p2
 			}
 		}
+		
+		/*******************************************************/
+		// Printing vehicle counter and tracked vehicle on image
+		/*******************************************************/
 
         char text[255]; 
         sprintf(text, "Vehicles Passed : %d", (int)Vehicle_counter);
@@ -513,9 +546,14 @@ int main()
 	waitKey(0);
 
 }
-//Call back function(mouse clik detection)
+
+/************************************ Function Definitions Start *********************************************/
+
 void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 {    
+	/*********************************************/
+	// Mouse click call back function 
+	/*********************************************/	
 	ofstream input;
 	input.open("input.txt",std::fstream::app);
      if  ( event == EVENT_LBUTTONDOWN )//Left click detect
@@ -543,19 +581,18 @@ void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 		 cout << "Enter to finish Line" << endl;
 	 }
 	 input.close();
-
 }
 
 void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 {		
-	//**********************************************************************
+	/**********************************************************************/
 	//		Please mark ROI in clockwise order
-	//**********************************************************************
+	/**********************************************************************/
 	//below indicates a BOI thatt is divided into 3
-	//  p4      p3
+	//  p4 * * * p3
 	//   *       *
 	//   *       *
-	//  p1      p2
+	//  p1 * * * p2
 
 	int x,y,i,j,pxMax,pyMax,pxMin,pyMin;
 	int X[4];
@@ -661,7 +698,10 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 	//variance of variance calculation of consecative 4 frames
 	varOfVarCalculator(blockNum,laneNum);
 
-	//Background updating
+	/*********************************************/
+	// Updating Background 
+	/*********************************************/
+
 	if(backgroundVarOfVar[laneNum][blockNum]<100)
 	{
 		//VarM initialisation for the background
@@ -694,14 +734,20 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 		}
 	}
 
+	/*****************************************************/
+	// Processing occupancy algorithm (if background done)
+	/*****************************************************/
+
 	if(backgroundDone)
 	{		
 		//deltaV calculation
 		float deltaV , PV ;
 		float thresh ;
 		
+		/********************/
 		// Old implementation 
-		
+		/********************/
+
 		if(varM[laneNum][blockNum]>varI[laneNum][blockNum])
 		{
 			deltaV=(varM[laneNum][blockNum]-varI[laneNum][blockNum])/varM[laneNum][blockNum];
@@ -723,108 +769,28 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 		PV = occ ;
 		thresh = 0.3 ;
 		
-
+		/******************************/
 		// New Kratika's implementation
-		
+		/******************************/
+
 		// deltaV = fabs(varM[laneNum][blockNum] - varI[laneNum][blockNum]) ;
-
 		// float fx =  (1/267.798)*exp(-deltaV/267.798) ;
-        
-  //       if (fx > maxfx)
-  //           maxfx = fx;
-        
-  //       PV = 1 - (fx/maxfx);
-  //       thresh = 0.88 ;
-
-		// //NCC calculation
-		
-		// cout<<"deltaV : "<<deltaV<<" fx :"<<fx<<endl ;
-		// cout<<"maxfx : "<<maxfx<<" PV : "<<PV<<endl<<endl ;
-
-		// threshold , 0.9 : Kratika's code :: 0.3 earlier code 
+        // if (fx > maxfx)
+  		 	// maxfx = fx;
+        // PV = 1 - (fx/maxfx);
+  		// thresh = 0.88 ;
 
 		if(PV>thresh)
-		{
-			shadow=0;
-			for(y=0;y<rows;y++)
-			{
-				
-				
-				for(x=0;x<cols;x++)
-				{
-					
-
-					
-						
-						
-
-					
-					if(y>=pyMin && y<=pyMax && x>=pxMin && x<=pxMax)
-					{
-						//Current position calculation
-
-						X[0]=(int)(lineCoefficients[0][0]*x+lineCoefficients[0][1]*y+lineCoefficients[0][2]);
-						X[1]=(int)(lineCoefficients[1][0]*x+lineCoefficients[1][1]*y+lineCoefficients[1][2]);
-						X[2]=(int)(lineCoefficients[2][0]*x+lineCoefficients[2][1]*y+lineCoefficients[2][2]);
-						X[3]=(int)(lineCoefficients[3][0]*x+lineCoefficients[3][1]*y+lineCoefficients[3][2]);
-				
-
-						//Current position comparison
-						
-						
-						if(detectPosivite(X[0])==detectPosivite(line1P3) && detectPosivite(X[1])==detectPosivite(line2P1) &&
-						   detectPosivite(X[2])==detectPosivite(line3P1) && detectPosivite(X[3])==detectPosivite(line4P2))
-						{
-							ER=0;
-							EI=0;
-							EM=0;
-
-							
-
-							for(i=-1;i<2;i++)
-							{
-								for(j=-1;j<2;j++)
-								{
-									matRead1 = img.at<uchar>(y+j,x+i);
-									matRead2 = background.at<uchar>(y+j,x+i);
-									
-									ER=ER+((int)matRead1.val[0]*(int)matRead2.val[0]);
-									EI=EI+((int)matRead1.val[0]*(int)matRead1.val[0]);
-									EM=EM+((int)matRead2.val[0]*(int)matRead2.val[0]);
-								}
-							}
-
-							
+		{	
+			/*********************************************/
+			// Shadow Implementation here , now commented
+			/*********************************************/
 
 
-							NCC=log(ER+1)-0.5*(log(EI+1)+log(EM+1));
-							
+			/*********************************************/
+			// Coloring the block with white patch 
+			/*********************************************/
 
-							if(NCC>=-0.105 && EI<EM)
-							{
-								matRead1 = img.at<uchar>(y,x);
-								matRead2 = background.at<uchar>(y,x);
-								ratio = (float)(matRead1.val[0]-matRead2.val[0])/ (float)(matRead1.val[0]+matRead2.val[0]);
-								
-								if(ratio>=-0.5)
-									shadow++;
-							}
-				
-						}
-				
-
-					}
-				}
-			}
-
-			
-			//shadow pixel percentage calculation
-			
-			n=(float)shadow/(float)forgroundCounter;
-
-			
-            //if((n<=0.9))
-			{
 				for(y=0;y<rows;y++)
 				{
 					for(x=0;x<cols;x++)
@@ -857,18 +823,19 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 			
 			
 		}
-
-
-	}
-
 }
 
 void Vehicle_Counter(int frame_counter)
 {
 	int h , i ; 
 
-	// Write code for lane change 
+	/*********************************************/
+	// Code for Lane change 
+	/*********************************************/
 
+	/************************************************************/
+	// Updating colored matrix for first frame & pushing to queue
+	/************************************************************/
 	if((frame_counter==1))
         {
  			for(h=0;h<numLanes;h++){
@@ -888,7 +855,11 @@ void Vehicle_Counter(int frame_counter)
  				}
         	}
         }
-		
+
+ 	/****************************************************************/
+	// Rule book for vehicle counter updation and pushing it to queue  
+	/****************************************************************/
+
 	for(h = 0 ; h < numLanes ; h++){
 		for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
 			if(isColored[1][h][i]){
@@ -915,7 +886,10 @@ void Vehicle_Counter(int frame_counter)
 				
 	}
 
-	// Popping out of the vehicle queue 
+	/********************************/
+	// Popping out vehicle from queue 
+	/********************************/
+
 	for(h = 0 ; h < numLanes ; h++){
 		i = realNumDivision[h]*virticalNumOfDivisions - 2 ;
 		if(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))&&(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))))
@@ -925,10 +899,13 @@ void Vehicle_Counter(int frame_counter)
 			Track[h].pop() ;
 	}
 
+	/*********************************************************************/
+	//Vehicle tracking by comparing it with current frame's set of patches
+	/*********************************************************************/
+
 	int TrackNew[numLanes][2*virticalNumOfDivisions] ;
 
-	
- 	for(h = 0 ; h < numLanes ; h ++){
+	for(h = 0 ; h < numLanes ; h ++){
  		for( i = 0 ; i < 2*virticalNumOfDivisions ; i++)
  			TrackNew[h][i] = -1 ;
  	}
@@ -951,49 +928,37 @@ void Vehicle_Counter(int frame_counter)
 			else 
 				i++ ; 
 		}
-
+		// Sorting in descending order 
  		sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions , wayToSort);
  		
  	}
 
- 	// cout<<"Another matrix"<<endl ;
- 	// for(h = 0 ; h < numLanes ; h ++){
- 	// 	for( i = 0 ; i < 2*virticalNumOfDivisions ; i++)
- 	// 		cout<<TrackNew[h][i]<<" , " ;
- 	// 	cout<<endl ;
- 	// }
-
- //   cout<<"Tracking starts"<<endl;
     for(h = 0 ; h < numLanes ; h++)
     {	
     	counter = 0 ; 
-    //	cout<<"Lane no. "<<h<<" :: ";
         for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {
-         // if(TrackNew[h][counter]!=100){
           	(*it).second = TrackNew[h][counter] ;
             counter++ ;
-          //}
-      //	  cout<<(*it).first<<"-->"<<(*it).second<<" : ";
-
         }
-    //    cout<<endl;
     }	
- //   cout<<"Tracking ends"<<endl ;
 
-			for(h=0 ; h < numLanes ; h++){
-				for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
-					isColored[0][h][i] = isColored[1][h][i] ;
-				}
-			}
+    /*****************************************************/
+    //Updating previous colored matrix with current matrix
+    /*****************************************************/
 
-
-
+	for(h=0 ; h < numLanes ; h++){
+		for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
+			isColored[0][h][i] = isColored[1][h][i] ;
+		}
+	}
 }
 
-//variance is calculate using the approximation method
 void varianceCalculator(int a,int counter)
 {
+	/************************************************/
+	// Variance calculated usinf approximation method 
+	/************************************************/
 	float max=0,min=0;
 	char maxi='o',mini='o';
 	
@@ -1032,14 +997,15 @@ void varianceCalculator(int a,int counter)
 	else
 	{
 		var1=V+W/(counter);
-	}
-	
-	
+	}	
 }
 	
-//Variance of variance calculation using normal variance calculatin
 void varOfVarCalculator(int blockNum,int laneNum)
 {
+
+	/*********************************************/
+	// Variance of variance calculation using normal variance calculation
+	/*********************************************/	
 	int i;
 	double m,var,total;
 	total=0;
@@ -1058,9 +1024,12 @@ void varOfVarCalculator(int blockNum,int laneNum)
 	backgroundVarOfVar[laneNum][blockNum]=var;
 }
 
-//coefficent A calculation of standard line equation
 float calA(Point p1,Point p2)
 {
+	/***************************************************/
+	//coefficent A calculation of standard line equation
+	/***************************************************/
+
 	if(p1.x==p2.x)
 		return 1;
 	else if(p1.y==p2.y)
@@ -1069,19 +1038,23 @@ float calA(Point p1,Point p2)
 		 return (float)(p1.y-p2.y)/(p1.x-p2.x);
 }
 
-//coefficent B calculation of standard line equation
 float calB(Point p1,Point p2)
 {
+	/***************************************************/
+	//coefficent B calculation of standard line equation
+	/***************************************************/
+
 	if(p1.x==p2.x)
 		return 0 ;
 	else
 		return -1 ;
 }
 
-//coefficent C calculation of standard line equation
 float calC(Point p1,Point p2,float A,float B)
 {
-	
+	/***************************************************/
+	//coefficent C calculation of standard line equation
+	/***************************************************/
 	return -(A*p1.x+B*p1.y);
 }
 
@@ -1096,6 +1069,10 @@ bool detectPosivite(int a)
 //rounding off function
 int round(float a)
 {
+	/***********************/
+	// rounding off fucntion
+	/***********************/
+
 	int b;
 	b=(int)a;
 	if(a>0)
@@ -1116,9 +1093,11 @@ int round(float a)
 		return 0;
 }
 
-//finding maximum of four points
 int findMax(int a,int b,int c,int d)
 {
+	/*******************************/
+	//finding maximum of four points
+	/*******************************/
 	int max = a;
 	if(b>max)
 		max=b;
@@ -1129,9 +1108,11 @@ int findMax(int a,int b,int c,int d)
 	return max;
 }
 
-//finding minimum of four points
 int findMin(int a,int b,int c,int d)
 {
+	/*******************************/
+	//finding minimum of four points
+	/*******************************/
 	int min = a;
 	if(b<min)
 		min=b;

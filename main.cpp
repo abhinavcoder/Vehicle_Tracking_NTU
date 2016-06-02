@@ -64,6 +64,7 @@ float calA(Point p1,Point p2);
 float calB(Point p1,Point p2);
 float calC(Point p1,Point p2,float A,float B);
 bool detectPosivite(int a);
+void gridGenerator();
 void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum);
 void Occupancy(Point p4 , Point p3 , Point p2 , Point p1 , int laneNum , int blockNum) ;
 void varianceCalculator(int a,int counter);
@@ -88,6 +89,7 @@ map< pair<int , int> , pair<int , int> > GridMap ;
 Mat img,frame,background;
 Size s=Size(320,240);
 Point finalPoints[numLanes][2][numDivision*3+1];
+Point subGridPoints[numLanes*3][2][numDivision*3+1];
 int backgroundVarOfVar[numLanes][numDivision*virticalNumOfDivisions]={0};
 float finalLineCoefficients[numLanes][numDivision*virticalNumOfDivisions*3+1][3];
 int rows = s.height;
@@ -111,10 +113,14 @@ int isColored[2][numLanes][numDivision*virticalNumOfDivisions] = {0} ;
 
 float maxfx = 0.0037 ;
 
+// Variables loaded from main function
+Point L[2*numLanes][10];
+int lEnd[2*numLanes];
+float initialLines[2][3];
+
 //*************************/
 // Main function definition
 /**************************/
-
 int main()
 {
 	VideoCapture cap("./Videos/Video.avi"); // open the video file for reading
@@ -134,22 +140,11 @@ int main()
 	background=Mat(s,type,Scalar::all(0));
 	
 	Point p4,p3,p2,p1; //remove
-	Point L[2*numLanes][10];
-	float yIncrimenter;
-	int yVal[numDivision*3+1];
-	int lEnd[2*numLanes];
 	int i=0,j=0,h;
-	float initialLines[2][3];
-	int lCount;
-	int xInc;
-	int yInc;
-	int inti;
 	double elapsed_secs;
 	int tcounter=0;
 	double avg=0;
 	int backDoneCounter;
-	int minStartingyValue;
-	int maxStartingyValue;
 
 	bool capSuccess = cap.read(img);
 		
@@ -227,7 +222,18 @@ int main()
 
     int frame_counter = 0 ;
 
-    // Video Processing starts 
+    /******************************************/
+    // Calling the function for grid generation
+    /******************************************/
+    gridGenerator();
+
+    // Mapping the grid to original coordinates in image 2D plane 
+    for(h=0;h<numLanes*2-1;h+=2)
+		for(i=0;i<realNumDivision[h/2]*virticalNumOfDivisions;i++)
+			GridMap[make_pair(h/2,i)] = make_pair((finalPoints[h/2][0][i].x + finalPoints[h/2][1][i].x)/2 , (finalPoints[h/2][0][i+1].y + finalPoints[h/2][1][i].y)/2) ;
+
+
+	// Video Processing starts 
 	while(1)	
 	{
 		bool capSuccess = cap.read(img);
@@ -247,189 +253,15 @@ int main()
 		/**************************************************************/
 		// Getting the desired coordinates of the block after processing
 		/**************************************************************/
-		
 		if(!backgroundDone)
 		{
-			
-				//finding minimum/maximum y values to find the boarders of all the lanes and readjusting boarders
-				minStartingyValue=L[0][lEnd[0]].y;
-				maxStartingyValue=L[0][0].y;
-				for(h=0;h<numLanes*2;h++)
-				{
-					if(minStartingyValue<L[h][lEnd[h]].y)
-					{
-						minStartingyValue=L[h][lEnd[h]].y;
-					}
-					if(maxStartingyValue>L[h][0].y)
-					{
-						maxStartingyValue=L[h][0].y;
-					}
-	
-				}
-	
-
 			for(h=0;h<numLanes*2-1;h+=2)
 			{
-			
-				//finding maximum/minimum and updating boundary points(x values) 
-                
-               //  Line equation used : " A.x + B.y = C :: y = (-A/B).x + (-C/B)"   
-				initialLines[0][0]=calA(L[h][0],L[h][1]);
-				initialLines[0][1]=calB(L[h][0],L[h][1]);
-				initialLines[0][2]=calC(L[h][0],L[h][1],initialLines[0][0],initialLines[0][1]);
-
-				initialLines[1][0]=calA(L[h+1][0],L[h+1][1]);
-				initialLines[1][1]=calB(L[h+1][0],L[h+1][1]);
-				initialLines[1][2]=calC(L[h+1][0],L[h+1][1],initialLines[1][0],initialLines[1][1]);
-
-
-				//finding x values
-				if(L[h][0].y!=maxStartingyValue)
-				{ 
-
-					L[h][0].y=maxStartingyValue;
-					if(initialLines[0][0]==0)
-						L[h][0].x=-initialLines[0][2];
-					else
-						L[h][0].x=round(-(initialLines[0][1]*L[h][0].y+initialLines[0][2])/initialLines[0][0]);
-				}
-				if(L[h+1][0].y!=maxStartingyValue)
-				{
-					L[h+1][0].y=maxStartingyValue;
-					if(initialLines[1][0]==0)
-						L[h+1][0].x=-initialLines[1][2];
-					else
-						L[h+1][0].x=round(-(initialLines[1][1]*L[h+1][0].y+initialLines[1][2])/initialLines[1][0]);
-				}
-
-				initialLines[0][0]=calA(L[h][lEnd[h]-1],L[h][lEnd[h]]);
-				initialLines[0][1]=calB(L[h][lEnd[h]-1],L[h][lEnd[h]]);
-				initialLines[0][2]=calC(L[h][lEnd[h]-1],L[h][lEnd[h]],initialLines[0][0],initialLines[0][1]);
-
-				initialLines[1][0]=calA(L[h+1][lEnd[h+1]-1],L[h+1][lEnd[h+1]]);
-				initialLines[1][1]=calB(L[h+1][lEnd[h+1]-1],L[h+1][lEnd[h+1]]);
-				initialLines[1][2]=calC(L[h+1][lEnd[h+1]-1],L[h+1][lEnd[h+1]],initialLines[1][0],initialLines[1][1]);
-	
-				if(L[h][lEnd[h]].y!=minStartingyValue)
-				{
-					L[h][lEnd[h]].y=minStartingyValue;
-					if(initialLines[0][0]==0)
-						L[h][lEnd[h]].x=-initialLines[0][2];
-					else
-						L[h][lEnd[h]].x=round(-(initialLines[0][1]*L[h][lEnd[h]].y+initialLines[0][2])/initialLines[0][0]);
-				}
-				else if(L[h][lEnd[h]].y!=minStartingyValue)
-				{
-					L[h+1][lEnd[h+1]].y=minStartingyValue;
-					if(initialLines[1][0]==0)
-						L[h+1][lEnd[h+1]].x=-initialLines[1][2];
-					else
-						L[h+1][lEnd[h+1]].x=round(-(initialLines[1][1]*L[h+1][lEnd[h+1]].y+initialLines[1][2])/initialLines[1][0]);
-				}
-		
-
-				//Defining incrementer/decrement. To make sure that the BOI hight increase/decrease accordingly
-				if((L[h+1][0].x-L[h][0].x)>(L[h+1][lEnd[h]].x-L[h][lEnd[h+1]].x))
-					yIncrimenter=.98;
-				else if((L[h+1][0].x-L[h][0].x)<(L[h+1][lEnd[h]].x-L[h][lEnd[h+1]].x))
-					yIncrimenter=1.1;
-				else
-					yIncrimenter=1;
-
-				yVal[0]=L[h][0].y;
-	
-				inti=(L[h][lEnd[h]].y-L[h][0].y)/numDivision;
-				realNumDivision[h/2]=0;
-				for(i=0;i<numDivision*virticalNumOfDivisions && (yVal[i]+inti)>L[h][lEnd[h]].y;i+=virticalNumOfDivisions)
-				{
-					yVal[i+virticalNumOfDivisions]=yVal[i]+inti;
-					inti=inti*yIncrimenter;
-					realNumDivision[h/2]++;
-				}
-		
-
-				//finding final BOI points
-				finalPoints[h/2][0][0]= L[h][0];
-				finalPoints[h/2][1][0]= L[h+1][0];
-				lCount=1;
-				for(j=0;j<2;j++)
-				{
-					for(i=1;i<realNumDivision[h/2]+1;i++)
-					{
-						finalPoints[h/2][j][i*virticalNumOfDivisions].y = yVal[i*virticalNumOfDivisions];
-						while(yVal[i*virticalNumOfDivisions]<L[h][lCount].y)
-						{
-							lCount++;
-						}
-						if(j==0)
-						{
-							initialLines[j][0]=calA(L[h][lCount-1],L[h][lCount]);
-							initialLines[j][1]=calB(L[h][lCount-1],L[h][lCount]);
-							initialLines[j][2]=calC(L[h][lCount-1],L[h][lCount],initialLines[j][0],initialLines[j][1]);
-						}
-						else if(j==1)
-						{
-							initialLines[j][0]=calA(L[h+1][lCount-1],L[h+1][lCount]);
-							initialLines[j][1]=calB(L[h+1][lCount-1],L[h+1][lCount]);
-							initialLines[j][2]=calC(L[h+1][lCount-1],L[h+1][lCount],initialLines[j][0],initialLines[j][1]);
-						}
-						if(initialLines[j][0]==0)
-							finalPoints[h/2][j][i*virticalNumOfDivisions].x=-initialLines[j][2];
-						else
-							finalPoints[h/2][j][i*virticalNumOfDivisions].x=-(int)((initialLines[j][1]*finalPoints[h/2][j][i*virticalNumOfDivisions].y+initialLines[j][2])/initialLines[j][0]);
-						lCount=1;
-
-					}
-				}
-
-				//furthure division to horizontal blocks
-				
-				/****************************************************************************/
-				// Toggle following  " for loop " to create 3 horizontal divisons in the block 
-				/****************************************************************************/
-
-				/*
-				for(i=0;i<realNumDivision[h/2]+1;i++)
-				{
-					xInc=(finalPoints[h/2][1][i*virticalNumOfDivisions].x-finalPoints[h/2][0][i*virticalNumOfDivisions].x)/3;
-					finalPoints[h/2][1][i*virticalNumOfDivisions].x=finalPoints[h/2][0][i*virticalNumOfDivisions].x+2*xInc;
-					finalPoints[h/2][0][i*virticalNumOfDivisions].x=finalPoints[h/2][0][i*virticalNumOfDivisions].x+xInc;
-				}
-				*/
-
-				//dividing each block into virtically to equal 3 blocks to finish BOI
-				
-				for(j=0;j<2;j++)
-				{
-					for(i=0;i<realNumDivision[h/2];i++)
-					{
-						initialLines[0][0] = calA(finalPoints[h/2][j][i*virticalNumOfDivisions], finalPoints[h/2][j][i*virticalNumOfDivisions+3]);
-						initialLines[0][1] = calB(finalPoints[h/2][j][i*virticalNumOfDivisions], finalPoints[h/2][j][i*virticalNumOfDivisions+3]);
-						initialLines[0][2] = calC(finalPoints[h/2][j][i*virticalNumOfDivisions], finalPoints[h/2][j][i*virticalNumOfDivisions+3], initialLines[0][0], initialLines[0][1]);
-
-						yInc = (finalPoints[h/2][j][i*virticalNumOfDivisions+3].y - finalPoints[h/2][j][i*virticalNumOfDivisions].y) / virticalNumOfDivisions;
-		
-						finalPoints[h/2][j][i*virticalNumOfDivisions+1].y = finalPoints[h/2][j][i*virticalNumOfDivisions].y+yInc;
-						if (initialLines[0][0] == 0)
-							finalPoints[h/2][j][i*virticalNumOfDivisions+1].x = -initialLines[0][2];
-						else
-							finalPoints[h/2][j][i*virticalNumOfDivisions+1].x = -(int)((initialLines[0][1] * finalPoints[h/2][j][i*virticalNumOfDivisions+1].y  + initialLines[0][2]) / initialLines[0][0]);
-		
-
-						finalPoints[h/2][j][i*virticalNumOfDivisions+2].y = finalPoints[h/2][j][i*virticalNumOfDivisions].y+2*yInc;
-						if (initialLines[0][0] == 0)
-							finalPoints[h/2][j][i*virticalNumOfDivisions+2].x = -initialLines[0][2];
-						else
-							finalPoints[h/2][j][i*virticalNumOfDivisions+2].x = -(int)((initialLines[0][1] * finalPoints[h/2][j][i*virticalNumOfDivisions+2].y  + initialLines[0][2]) / initialLines[0][0]);
-					}
-				}
 				
 			
 			    // used to wait till the full background is compleated
 				for(i=0;i<realNumDivision[h/2]*virticalNumOfDivisions;i++)
 				{
-					// Mapping the grid to original coordinates in image 2D plane
-					GridMap[make_pair(h/2,i)] = make_pair((finalPoints[h/2][0][i].x + finalPoints[h/2][1][i].x)/2 , (finalPoints[h/2][0][i+1].y + finalPoints[h/2][1][i].y)/2) ;
 					// Processing for background update and occupancy counter 
 					BOIprocessor(finalPoints[h/2][0][i+1],finalPoints[h/2][1][i+1],finalPoints[h/2][1][i],finalPoints[h/2][0][i],i,h/2);
 				}
@@ -696,11 +528,12 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 	backgroundVariance[laneNum][blockNum][0]=var1;
 	
 	//variance of variance calculation of consecative 4 frames
-	varOfVarCalculator(blockNum,laneNum);
 
 	/*********************************************/
 	// Updating Background 
 	/*********************************************/
+
+	varOfVarCalculator(blockNum,laneNum);
 
 	if(backgroundVarOfVar[laneNum][blockNum]<100)
 	{
@@ -775,10 +608,10 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 
 		// deltaV = fabs(varM[laneNum][blockNum] - varI[laneNum][blockNum]) ;
 		// float fx =  (1/267.798)*exp(-deltaV/267.798) ;
-        // if (fx > maxfx)
-  		 	// maxfx = fx;
-        // PV = 1 - (fx/maxfx);
-  		// thresh = 0.88 ;
+  //       if (fx > maxfx)
+  // 		 	maxfx = fx;
+  //       PV = 1 - (fx/maxfx);
+  // 		thresh = 0.88 ;
 
 		if(PV>thresh)
 		{	
@@ -819,6 +652,58 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 						}
 					}
 				}
+			}
+			else
+			{
+
+				/*********************************************/
+				//As per used in Matlab code (said by Kratika)
+				/*********************************************/
+
+				//VarI initialisation for the frame
+				varI[laneNum][blockNum]=(float)var1;
+	
+				//Shifting the variances
+				backgroundVariance[laneNum][blockNum][3]=backgroundVariance[laneNum][blockNum][2];
+				backgroundVariance[laneNum][blockNum][2]=backgroundVariance[laneNum][blockNum][1];
+				backgroundVariance[laneNum][blockNum][1]=backgroundVariance[laneNum][blockNum][0];
+				backgroundVariance[laneNum][blockNum][0]=var1;
+	
+				//variance of variance calculation of consecative 4 frames
+				varOfVarCalculator(blockNum,laneNum);
+
+				if(backgroundVarOfVar[laneNum][blockNum]<100)
+				{
+					//VarM initialisation for the background
+					varM[laneNum][blockNum]=var1;
+					for(y=0;y<rows;y++)
+					{
+						for(x=0;x<cols;x++)
+						{
+							if(y>=pyMin && y<=pyMax && x>=pxMin && x<=pxMax)
+							{
+							//Current position calculation
+
+							X[0]=(int)(lineCoefficients[0][0]*x+lineCoefficients[0][1]*y+lineCoefficients[0][2]);
+							X[1]=(int)(lineCoefficients[1][0]*x+lineCoefficients[1][1]*y+lineCoefficients[1][2]);
+							X[2]=(int)(lineCoefficients[2][0]*x+lineCoefficients[2][1]*y+lineCoefficients[2][2]);
+							X[3]=(int)(lineCoefficients[3][0]*x+lineCoefficients[3][1]*y+lineCoefficients[3][2]);
+				
+
+							//Current position comparison
+					
+							if(detectPosivite(X[0])==detectPosivite(line1P3) && detectPosivite(X[1])==detectPosivite(line2P1) &&
+					   		detectPosivite(X[2])==detectPosivite(line3P1) && detectPosivite(X[3])==detectPosivite(line4P2) )
+							{
+								allBlocksDone[laneNum][blockNum]=true;
+								background.at<uchar>(y,x)=img.at<uchar>(y,x);
+							}				
+
+							}
+						}
+					}
+				}
+
 			}
 			
 			
@@ -952,6 +837,187 @@ void Vehicle_Counter(int frame_counter)
 			isColored[0][h][i] = isColored[1][h][i] ;
 		}
 	}
+}
+
+void gridGenerator()
+{
+   /************************************************/
+   // Generates the final point and grid coordinates
+   /************************************************/
+	
+	int i , j, h ;
+	float yIncrimenter;
+	int yVal[numDivision*3+1];
+	int lCount;
+	int xInc;
+	int yInc;
+	int inti;
+	int minStartingyValue;
+	int maxStartingyValue;
+   				
+   	//finding minimum/maximum y values to find the boarders of all the lanes and readjusting boarders
+	minStartingyValue=L[0][lEnd[0]].y;
+	maxStartingyValue=L[0][0].y;
+	for(h=0;h<numLanes*2;h++)
+	{
+		if(minStartingyValue<L[h][lEnd[h]].y)
+			minStartingyValue=L[h][lEnd[h]].y;
+		if(maxStartingyValue>L[h][0].y)
+			maxStartingyValue=L[h][0].y;
+	}
+
+    for(h=0 ; h< numLanes*2-1;h+=2)
+    {
+    	//finding maximum/minimum and updating boundary points(x values) 
+    	//  Line equation used : " A.x + B.y = C :: y = (-A/B).x + (-C/B)"   
+		initialLines[0][0]=calA(L[h][0],L[h][1]);
+		initialLines[0][1]=calB(L[h][0],L[h][1]);
+		initialLines[0][2]=calC(L[h][0],L[h][1],initialLines[0][0],initialLines[0][1]);
+
+		initialLines[1][0]=calA(L[h+1][0],L[h+1][1]);
+		initialLines[1][1]=calB(L[h+1][0],L[h+1][1]);
+		initialLines[1][2]=calC(L[h+1][0],L[h+1][1],initialLines[1][0],initialLines[1][1]);
+	
+		//finding x values
+	 	if(L[h][0].y!=maxStartingyValue)
+		{ 
+			L[h][0].y=maxStartingyValue;
+			if(initialLines[0][0]==0)
+				L[h][0].x=-initialLines[0][2];
+			else
+					L[h][0].x=round(-(initialLines[0][1]*L[h][0].y+initialLines[0][2])/initialLines[0][0]);
+		}
+		if(L[h+1][0].y!=maxStartingyValue)
+		{
+			L[h+1][0].y=maxStartingyValue;
+			if(initialLines[1][0]==0)
+				L[h+1][0].x=-initialLines[1][2];
+			else
+				L[h+1][0].x=round(-(initialLines[1][1]*L[h+1][0].y+initialLines[1][2])/initialLines[1][0]);
+		}
+
+		initialLines[0][0]=calA(L[h][lEnd[h]-1],L[h][lEnd[h]]);
+		initialLines[0][1]=calB(L[h][lEnd[h]-1],L[h][lEnd[h]]);
+		initialLines[0][2]=calC(L[h][lEnd[h]-1],L[h][lEnd[h]],initialLines[0][0],initialLines[0][1]);
+
+		initialLines[1][0]=calA(L[h+1][lEnd[h+1]-1],L[h+1][lEnd[h+1]]);
+		initialLines[1][1]=calB(L[h+1][lEnd[h+1]-1],L[h+1][lEnd[h+1]]);
+		initialLines[1][2]=calC(L[h+1][lEnd[h+1]-1],L[h+1][lEnd[h+1]],initialLines[1][0],initialLines[1][1]);
+	
+		if(L[h][lEnd[h]].y!=minStartingyValue)
+		{
+			L[h][lEnd[h]].y=minStartingyValue;
+			if(initialLines[0][0]==0)
+				L[h][lEnd[h]].x=-initialLines[0][2];
+			else
+				L[h][lEnd[h]].x=round(-(initialLines[0][1]*L[h][lEnd[h]].y+initialLines[0][2])/initialLines[0][0]);
+		}
+		else if(L[h][lEnd[h]].y!=minStartingyValue)
+				{
+					L[h+1][lEnd[h+1]].y=minStartingyValue;
+					if(initialLines[1][0]==0)
+						L[h+1][lEnd[h+1]].x=-initialLines[1][2];
+					else
+						L[h+1][lEnd[h+1]].x=round(-(initialLines[1][1]*L[h+1][lEnd[h+1]].y+initialLines[1][2])/initialLines[1][0]);
+				}
+		
+
+		//Defining incrementer/decrement. To make sure that the BOI hight increase/decrease accordingly
+		if((L[h+1][0].x-L[h][0].x)>(L[h+1][lEnd[h]].x-L[h][lEnd[h+1]].x))
+			yIncrimenter=.98;
+		else if((L[h+1][0].x-L[h][0].x)<(L[h+1][lEnd[h]].x-L[h][lEnd[h+1]].x))
+				yIncrimenter=1.1;
+			else
+				yIncrimenter=1;
+
+		yVal[0]=L[h][0].y;
+	
+		inti=(L[h][lEnd[h]].y-L[h][0].y)/numDivision;
+		realNumDivision[h/2]=0;
+		for(i=0;i<numDivision*virticalNumOfDivisions && (yVal[i]+inti)>L[h][lEnd[h]].y;i+=virticalNumOfDivisions)
+		{
+			yVal[i+virticalNumOfDivisions]=yVal[i]+inti;
+			inti=inti*yIncrimenter;
+			realNumDivision[h/2]++;
+		}
+		
+
+		//finding final BOI points
+		finalPoints[h/2][0][0]= L[h][0];
+		finalPoints[h/2][1][0]= L[h+1][0];
+		lCount=1;
+		for(j=0;j<2;j++)
+		{
+			for(i=1;i<realNumDivision[h/2]+1;i++)
+			{
+				finalPoints[h/2][j][i*virticalNumOfDivisions].y = yVal[i*virticalNumOfDivisions];
+				while(yVal[i*virticalNumOfDivisions]<L[h][lCount].y)
+				{
+					lCount++;
+				}
+				if(j==0)
+				{
+					initialLines[j][0]=calA(L[h][lCount-1],L[h][lCount]);
+					initialLines[j][1]=calB(L[h][lCount-1],L[h][lCount]);
+					initialLines[j][2]=calC(L[h][lCount-1],L[h][lCount],initialLines[j][0],initialLines[j][1]);
+				}
+				else if(j==1)
+					{
+						initialLines[j][0]=calA(L[h+1][lCount-1],L[h+1][lCount]);
+						initialLines[j][1]=calB(L[h+1][lCount-1],L[h+1][lCount]);
+						initialLines[j][2]=calC(L[h+1][lCount-1],L[h+1][lCount],initialLines[j][0],initialLines[j][1]);
+					}
+				if(initialLines[j][0]==0)
+					finalPoints[h/2][j][i*virticalNumOfDivisions].x=-initialLines[j][2];
+				else
+					finalPoints[h/2][j][i*virticalNumOfDivisions].x=-(int)((initialLines[j][1]*finalPoints[h/2][j][i*virticalNumOfDivisions].y+initialLines[j][2])/initialLines[j][0]);
+				lCount=1;
+
+			}
+		}
+				
+		//Getting coordinates of subgridpoints
+
+
+		//furthure division to horizontal blocks
+				
+		/****************************************************************************/
+		// Toggle following  " for loop " to create 3 horizontal divisons in the block 
+		/****************************************************************************/
+
+		/*
+		for(i=0;i<realNumDivision[h/2]+1;i++)
+		{
+			xInc=(finalPoints[h/2][1][i*virticalNumOfDivisions].x-finalPoints[h/2][0][i*virticalNumOfDivisions].x)/3;
+			finalPoints[h/2][1][i*virticalNumOfDivisions].x=finalPoints[h/2][0][i*virticalNumOfDivisions].x+2*xInc;
+			finalPoints[h/2][0][i*virticalNumOfDivisions].x=finalPoints[h/2][0][i*virticalNumOfDivisions].x+xInc;
+		}
+		*/
+
+		//dividing each block into virtically to equal 3 blocks to finish BOI
+		for(j=0;j<2;j++)
+		{
+			for(i=0;i<realNumDivision[h/2];i++)
+			{
+				initialLines[0][0] = calA(finalPoints[h/2][j][i*virticalNumOfDivisions], finalPoints[h/2][j][i*virticalNumOfDivisions+3]);
+				initialLines[0][1] = calB(finalPoints[h/2][j][i*virticalNumOfDivisions], finalPoints[h/2][j][i*virticalNumOfDivisions+3]);
+				initialLines[0][2] = calC(finalPoints[h/2][j][i*virticalNumOfDivisions], finalPoints[h/2][j][i*virticalNumOfDivisions+3], initialLines[0][0], initialLines[0][1]);
+
+				yInc = (finalPoints[h/2][j][i*virticalNumOfDivisions+3].y - finalPoints[h/2][j][i*virticalNumOfDivisions].y) / virticalNumOfDivisions;
+				finalPoints[h/2][j][i*virticalNumOfDivisions+1].y = finalPoints[h/2][j][i*virticalNumOfDivisions].y+yInc;
+				if (initialLines[0][0] == 0)
+					finalPoints[h/2][j][i*virticalNumOfDivisions+1].x = -initialLines[0][2];
+				else
+					finalPoints[h/2][j][i*virticalNumOfDivisions+1].x = -(int)((initialLines[0][1] * finalPoints[h/2][j][i*virticalNumOfDivisions+1].y  + initialLines[0][2]) / initialLines[0][0]);
+				
+				finalPoints[h/2][j][i*virticalNumOfDivisions+2].y = finalPoints[h/2][j][i*virticalNumOfDivisions].y+2*yInc;
+				if (initialLines[0][0] == 0)
+					finalPoints[h/2][j][i*virticalNumOfDivisions+2].x = -initialLines[0][2];
+				else
+					finalPoints[h/2][j][i*virticalNumOfDivisions+2].x = -(int)((initialLines[0][1] * finalPoints[h/2][j][i*virticalNumOfDivisions+2].y  + initialLines[0][2]) / initialLines[0][0]);
+			}
+		}
+    }
 }
 
 void varianceCalculator(int a,int counter)

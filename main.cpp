@@ -88,8 +88,10 @@ map< pair<int , int> , pair<int , int> > GridMap ;
 
 Mat img,frame,background;
 Size s=Size(320,240);
+
 Point finalPoints[numLanes][2][numDivision*3+1];
-Point subGridPoints[numLanes*3][2][numDivision*3+1];
+Point GridPoints[numLanes*3][2][numDivision*3+1];
+
 int backgroundVarOfVar[numLanes][numDivision*virticalNumOfDivisions]={0};
 float finalLineCoefficients[numLanes][numDivision*virticalNumOfDivisions*3+1][3];
 int rows = s.height;
@@ -232,7 +234,6 @@ int main()
 		for(i=0;i<realNumDivision[h/2]*virticalNumOfDivisions;i++)
 			GridMap[make_pair(h/2,i)] = make_pair((finalPoints[h/2][0][i].x + finalPoints[h/2][1][i].x)/2 , (finalPoints[h/2][0][i+1].y + finalPoints[h/2][1][i].y)/2) ;
 
-
 	// Video Processing starts 
 	while(1)	
 	{
@@ -320,17 +321,17 @@ int main()
 		// Generating the grid on image 
 		/*********************************************/
 
-		for(h=0;h<numLanes;h++)
+		for(h=0;h<3*numLanes;h++)
 		{
-			for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i++)
+			for(i=0;i<realNumDivision[h/3]*virticalNumOfDivisions;i++)
 			{
 				//line(img, finalPoints[h][0][i+1], finalPoints[h][1][i+1], 0 , 1, 8, 0) ;
-				line(img, finalPoints[h][1][i], finalPoints[h][0][i], 0 , 1, 8, 0) ;     // p1...........p2
+				line(img, GridPoints[h][1][i], GridPoints[h][0][i], 0 , 1, 8, 0) ;     // p1...........p2
 
-				line(img, finalPoints[h][1][i], finalPoints[h][1][i+1], 0 , 1, 8, 0) ;   // p1
+				line(img, GridPoints[h][1][i], GridPoints[h][1][i+1], 0 , 1, 8, 0) ;   // p1
 																						 // .
 																					  	 // .
-				line(img, finalPoints[h][0][i], finalPoints[h][0][i+1], 0 , 1, 8, 0) ;   // p2
+				line(img, GridPoints[h][0][i], GridPoints[h][0][i+1], 0 , 1, 8, 0) ;   // p2
 			}
 		}
 		
@@ -367,7 +368,6 @@ int main()
         }
 
 		 imshow("Current_Image",img);
-		// waitKey() ;
 
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
@@ -844,7 +844,7 @@ void gridGenerator()
    /************************************************/
    // Generates the final point and grid coordinates
    /************************************************/
-	
+
 	int i , j, h ;
 	float yIncrimenter;
 	int yVal[numDivision*3+1];
@@ -943,8 +943,9 @@ void gridGenerator()
 		
 
 		//finding final BOI points
-		finalPoints[h/2][0][0]= L[h][0];
-		finalPoints[h/2][1][0]= L[h+1][0];
+		GridPoints[3*h/2][0][0] = finalPoints[h/2][0][0]= L[h][0];
+		GridPoints[3*h/2 + 2][1][0] = finalPoints[h/2][1][0]= L[h+1][0];
+
 		lCount=1;
 		for(j=0;j<2;j++)
 		{
@@ -977,6 +978,25 @@ void gridGenerator()
 		}
 				
 		//Getting coordinates of subgridpoints
+		
+		for(i = 0 ; i < realNumDivision[h/2]+1;i++)
+		{
+			GridPoints[3*h/2][0][i*virticalNumOfDivisions] = finalPoints[h/2][0][i*virticalNumOfDivisions] ;
+			GridPoints[3*h/2][1][i*virticalNumOfDivisions] = GridPoints[3*h/2][0][i*virticalNumOfDivisions];
+			GridPoints[3*h/2 + 2][1][i*virticalNumOfDivisions] = finalPoints[h/2][1][i*virticalNumOfDivisions];
+			GridPoints[3*h/2 + 2][0][i*virticalNumOfDivisions] = GridPoints[3*h/2 + 2][1][i*virticalNumOfDivisions] ;
+		}
+
+		for(i=0;i<realNumDivision[h/2]+1;i++)
+		{
+			xInc=(finalPoints[h/2][1][i*virticalNumOfDivisions].x-finalPoints[h/2][0][i*virticalNumOfDivisions].x)/3;
+			GridPoints[3*h/2 + 2 ][0][i*virticalNumOfDivisions].x=finalPoints[h/2][0][i*virticalNumOfDivisions].x+2*xInc;
+			GridPoints[3*h/2][1][i*virticalNumOfDivisions].x=finalPoints[h/2][0][i*virticalNumOfDivisions].x+xInc;
+
+		    GridPoints[3*h/2 + 1 ][1][i*virticalNumOfDivisions] = GridPoints[3*h/2 + 2 ][0][i*virticalNumOfDivisions] ;
+		    GridPoints[3*h/2 + 1 ][0][i*virticalNumOfDivisions] = GridPoints[3*h/2][1][i*virticalNumOfDivisions] ;
+
+		}
 
 
 		//furthure division to horizontal blocks
@@ -1017,7 +1037,39 @@ void gridGenerator()
 					finalPoints[h/2][j][i*virticalNumOfDivisions+2].x = -(int)((initialLines[0][1] * finalPoints[h/2][j][i*virticalNumOfDivisions+2].y  + initialLines[0][2]) / initialLines[0][0]);
 			}
 		}
+	}
+
+	/***********************************/
+	//Generating the final subgridpoints
+	/***********************************/
+
+	for( h= 0 ; h < 3*numLanes ; h++)
+	{
+		for(j = 0 ; j < 2 ; j++)
+		{
+			for(i = 0 ; i < realNumDivision[h/3] ; i++)
+			{
+				initialLines[0][0] = calA(GridPoints[h][j][i*virticalNumOfDivisions], GridPoints[h][j][i*virticalNumOfDivisions+3]);
+				initialLines[0][1] = calB(GridPoints[h][j][i*virticalNumOfDivisions], GridPoints[h][j][i*virticalNumOfDivisions+3]);
+				initialLines[0][2] = calC(GridPoints[h][j][i*virticalNumOfDivisions], GridPoints[h][j][i*virticalNumOfDivisions+3], initialLines[0][0], initialLines[0][1]);
+			    
+			    yInc = (GridPoints[h][j][i*virticalNumOfDivisions+3].y - GridPoints[h][j][i*virticalNumOfDivisions].y) / virticalNumOfDivisions;
+			    GridPoints[h][j][i*virticalNumOfDivisions+1].y = GridPoints[h][j][i*virticalNumOfDivisions].y+yInc;
+				if (initialLines[0][0] == 0)
+					GridPoints[h][j][i*virticalNumOfDivisions+1].x = -initialLines[0][2];
+				else
+					GridPoints[h][j][i*virticalNumOfDivisions+1].x = -(int)((initialLines[0][1] * GridPoints[h][j][i*virticalNumOfDivisions+1].y  + initialLines[0][2]) / initialLines[0][0]);
+
+				GridPoints[h][j][i*virticalNumOfDivisions+2].y = GridPoints[h][j][i*virticalNumOfDivisions].y+2*yInc;
+				if (initialLines[0][0] == 0)
+					GridPoints[h][j][i*virticalNumOfDivisions+2].x = -initialLines[0][2];
+				else
+					GridPoints[h][j][i*virticalNumOfDivisions+2].x = -(int)((initialLines[0][1] * GridPoints[h][j][i*virticalNumOfDivisions+2].y  + initialLines[0][2]) / initialLines[0][0]);
+
+			}
+		}
     }
+
 }
 
 void varianceCalculator(int a,int counter)

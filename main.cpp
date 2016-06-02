@@ -84,7 +84,7 @@ const int virticalNumOfDivisions =3;
 const int numLanes = 4;                 
 
 iterable_queue< pair< int , int > > Track[numLanes] ;
-map< pair<int , int> , pair<int , int> > GridMap ; 
+map< pair<int , int> , pair<int , int> > LaneMap , subLaneMap ; 
 
 Mat img,frame,background;
 Size s=Size(320,240);
@@ -232,7 +232,12 @@ int main()
     // Mapping the grid to original coordinates in image 2D plane 
     for(h=0;h<numLanes*2-1;h+=2)
 		for(i=0;i<realNumDivision[h/2]*virticalNumOfDivisions;i++)
-			GridMap[make_pair(h/2,i)] = make_pair((finalPoints[h/2][0][i].x + finalPoints[h/2][1][i].x)/2 , (finalPoints[h/2][0][i+1].y + finalPoints[h/2][1][i].y)/2) ;
+			LaneMap[make_pair(h/2,i)] = make_pair((finalPoints[h/2][0][i].x + finalPoints[h/2][1][i].x)/2 , (finalPoints[h/2][0][i+1].y + finalPoints[h/2][1][i].y)/2) ;
+
+	for(h=0;h<3*numLanes;h++)
+		for(i=0;i<realNumDivision[h/3]*virticalNumOfDivisions;i++)
+			subLaneMap[make_pair(h,i)] = make_pair((GridPoints[h][0][i].x + GridPoints[h][1][i].x)/2 , (GridPoints[h][0][i+1].y + GridPoints[h][0][i].y)/2) ;
+
 
 	// Video Processing starts 
 	while(1)	
@@ -356,9 +361,9 @@ int main()
         	cout<<"Lane : "<<h<<" :: " ;
         for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {
-        	cout<<(*it).first<<"--->"<<(*it).second<<"("<<GridMap[*it].first<<","<<GridMap[*it].second<<")"<<" : ";
+        	cout<<(*it).first<<"--->"<<(*it).second<<"("<<LaneMap[*it].first<<","<<LaneMap[*it].second<<")"<<" : ";
            sprintf(text1[c], "V%d", (int)((*it).first));
-           putText(img, text1[c], cvPoint(GridMap[make_pair(h,(*it).second)].first,GridMap[make_pair(h,(*it).second)].second), 
+           putText(img, text1[c], cvPoint(LaneMap[make_pair(h,(*it).second)].first,LaneMap[make_pair(h,(*it).second)].second), 
           FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
 
           c++ ;
@@ -368,7 +373,6 @@ int main()
         }
 
 		 imshow("Current_Image",img);
-
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;

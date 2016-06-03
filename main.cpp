@@ -101,7 +101,7 @@ int realNumDivision[numLanes];
 bool endOfLineDet=true;
 bool backgroundDone=false;
 int backgroundVariance[numLanes*3][numDivision*virticalNumOfDivisions][4];
-float varM[numLanes*3][numDivision*virticalNumOfDivisions],varI[numLanes][numDivision*virticalNumOfDivisions];
+float varM[numLanes*3][numDivision*virticalNumOfDivisions],varI[numLanes*3][numDivision*virticalNumOfDivisions];
 
 bool allBlocksDone[numLanes*3][numDivision*virticalNumOfDivisions]={false};
 float deltam,deltav;
@@ -262,30 +262,25 @@ int main()
 		/**************************************************************/
 		if(!backgroundDone)
 		{
-			for(h=0;h<numLanes*2-1;h+=2)
+			for(h=0;h<3*numLanes;h++)
 			{
-				
-			
-			    // used to wait till the full background is compleated
-				for(i=0;i<realNumDivision[h/2]*virticalNumOfDivisions;i++)
+				for(i=0;i<realNumDivision[h/3]*virticalNumOfDivisions;i++)
 				{
-					// Processing for background update and occupancy counter 
-					BOIprocessor(finalPoints[h/2][0][i+1],finalPoints[h/2][1][i+1],finalPoints[h/2][1][i],finalPoints[h/2][0][i],i,h/2);
+					BOIprocessor(GridPoints[h][0][i+1],GridPoints[h][1][i+1],GridPoints[h][1][i],GridPoints[h][0][i],i,h);
 				}
 			}
-
+			
 			backDoneCounter=0;
-			for(i=0;i<numLanes;i++)
+			for(i=0;i<3*numLanes;i++)
 			{
 				for(j=0;j<numDivision*virticalNumOfDivisions;j++)
 				{
 					if(allBlocksDone[i][j])
 						backDoneCounter++;				
-					
-
 				}
 			}
-			if(backDoneCounter==numDivision*virticalNumOfDivisions*numLanes)
+
+			if(backDoneCounter==numDivision*virticalNumOfDivisions*numLanes*3)
 				backgroundDone=true;
 			else
 				continue;
@@ -316,8 +311,10 @@ int main()
 
 		frame_counter++ ;
 		if(Vehicle_Track)
+		{
+			cout<<frame_counter<<endl;
 			Vehicle_Counter(frame_counter);
-
+		}
 		// cout<<"Vehicles passed : "<<Vehicle_counter<<endl;
 		// clock_t end = clock();
 		// elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -752,6 +749,29 @@ void Vehicle_Counter(int frame_counter)
 	/************************************************************/
 	if((frame_counter==1))
         {
+        	cout<<"First frame"<<endl;
+
+		int counter = 0 ; 
+    	// get the new position of the cars 
+		for(h=0;h<numLanes;h++)
+		{
+			i = 0 ; 
+			while(i < realNumDivision[h]*virticalNumOfDivisions)
+			{
+				if(isLaneColored[1][h][i]){
+					int k = 0; 
+					while(isLaneColored[1][h][i+k])
+						k++ ;
+					Vehicle_counter++ ;
+					Track[h].push(make_pair(Vehicle_counter,i + k - 1)) ;
+					i = i+k ;
+				}
+				else 
+					i++ ; 
+			}
+		}
+
+			/*
  			for(h=0;h<numLanes;h++){
  				for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i=i+4){
  					if(isLaneColored[1][h][i] | isLaneColored[1][h][i+1] | isLaneColored[1][h][i+2] | isLaneColored[1][h][i+3])
@@ -768,6 +788,7 @@ void Vehicle_Counter(int frame_counter)
  					}
  				}
         	}
+        	*/
         }
 
  	/****************************************************************/

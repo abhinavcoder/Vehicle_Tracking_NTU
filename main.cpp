@@ -92,26 +92,27 @@ Size s=Size(320,240);
 Point finalPoints[numLanes][2][numDivision*3+1];
 Point GridPoints[numLanes*3][2][numDivision*3+1];
 
-int backgroundVarOfVar[numLanes][numDivision*virticalNumOfDivisions]={0};
-float finalLineCoefficients[numLanes][numDivision*virticalNumOfDivisions*3+1][3];
+int backgroundVarOfVar[numLanes*3][numDivision*virticalNumOfDivisions]={0};
+float finalLineCoefficients[numLanes*3][numDivision*virticalNumOfDivisions*3+1][3];
 int rows = s.height;
 int cols = s.width;
 int k,l;
 int realNumDivision[numLanes];
 bool endOfLineDet=true;
 bool backgroundDone=false;
-int backgroundVariance[numLanes][numDivision*virticalNumOfDivisions][4];
-float varM[numLanes][numDivision*virticalNumOfDivisions],varI[numLanes][numDivision*virticalNumOfDivisions];
+int backgroundVariance[numLanes*3][numDivision*virticalNumOfDivisions][4];
+float varM[numLanes*3][numDivision*virticalNumOfDivisions],varI[numLanes][numDivision*virticalNumOfDivisions];
 
-bool allBlocksDone[numLanes][numDivision*virticalNumOfDivisions]={false};
+bool allBlocksDone[numLanes*3][numDivision*virticalNumOfDivisions]={false};
 float deltam,deltav;
 float m1=0,P=0,P1=0,u=0,Pl,var1=0;
 float W,W1,V=0,W11;
 
-int occ_counter[numLanes][numDivision*virticalNumOfDivisions] = {0} ;
+int occ_counter[numLanes*3][numDivision*virticalNumOfDivisions] = {0} ;
 int Vehicle_counter = 0 ;
 bool Vehicle_Track = 1 ; 	
-int isColored[2][numLanes][numDivision*virticalNumOfDivisions] = {0} ;
+int isLaneColored[2][numLanes][numDivision*virticalNumOfDivisions] = {0} ;
+int isGridColored[2][numLanes*3][numDivision*virticalNumOfDivisions] = {0} ;
 
 float maxfx = 0.0037 ;
 
@@ -293,17 +294,19 @@ int main()
 		//used to calculate time if needed
 		clock_t begin = clock();
 		//Calculating and concluding the current blocks status
-		for(h=0 ; h < numLanes ; h++){
-			for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
-					isColored[1][h][i] = 0 ;
+		for(h=0 ; h < 3*numLanes ; h++){
+			for(i=0 ; i < realNumDivision[h/3]*virticalNumOfDivisions ; i++){
+					if(h%3==0)	
+						isLaneColored[1][h/3][i] = 0 ;
+					isGridColored[1][h][i] = 0 ;
 				}
 			}
 
-		for(h=0;h<numLanes;h++)
+		for(h=0;h<3*numLanes;h++)
 		{
-			for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i++)
+			for(i=0;i<realNumDivision[h/3]*virticalNumOfDivisions;i++)
 			{
-				BOIprocessor(finalPoints[h][0][i+1],finalPoints[h][1][i+1],finalPoints[h][1][i],finalPoints[h][0][i],i,h);
+				BOIprocessor(GridPoints[h][0][i+1],GridPoints[h][1][i+1],GridPoints[h][1][i],GridPoints[h][0][i],i,h);
 			}
 		}
 
@@ -340,6 +343,26 @@ int main()
 			}
 		}
 		
+		for(h = 0 ; h < numLanes ; h++)
+		{
+			for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions;i++)
+			{
+				cout<<isLaneColored[1][h][i]<<" ";
+			}
+			cout<<endl ;
+		}
+
+		cout<<endl ;
+
+		for(h = 0 ; h < 3*numLanes ; h++)
+		{
+			for(i = 0 ; i < realNumDivision[h/3]*virticalNumOfDivisions;i++)
+			{
+				cout<<isGridColored[1][h][i]<<" ";
+			}
+			cout<<endl;
+		}
+		cout<<endl<<endl<<"*********************************"<<endl ;
 		/*******************************************************/
 		// Printing vehicle counter and tracked vehicle on image
 		/*******************************************************/
@@ -373,6 +396,7 @@ int main()
         }
 
 		 imshow("Current_Image",img);
+		 waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -648,7 +672,8 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 							{
 									
 									img.at<uchar>(y,x)=255;
-									isColored[1][laneNum][blockNum] = 1 ;
+									isLaneColored[1][laneNum/3][blockNum] = 1 ;
+									isGridColored[1][laneNum][blockNum] = 1 ; 
 					
 							}
 				
@@ -729,16 +754,16 @@ void Vehicle_Counter(int frame_counter)
         {
  			for(h=0;h<numLanes;h++){
  				for(i=0;i<realNumDivision[h]*virticalNumOfDivisions;i=i+4){
- 					if(isColored[1][h][i] | isColored[1][h][i+1] | isColored[1][h][i+2] | isColored[1][h][i+3])
+ 					if(isLaneColored[1][h][i] | isLaneColored[1][h][i+1] | isLaneColored[1][h][i+2] | isLaneColored[1][h][i+3])
  					{
  						Vehicle_counter++ ;
- 						if(isColored[1][h][i])
+ 						if(isLaneColored[1][h][i])
  							Track[h].push(make_pair(Vehicle_counter,i)) ;
- 						if(isColored[1][h][i+1])
+ 						if(isLaneColored[1][h][i+1])
  							Track[h].push(make_pair(Vehicle_counter,i+1)) ; 
- 						if(isColored[1][h][i+2])
+ 						if(isLaneColored[1][h][i+2])
  							Track[h].push(make_pair(Vehicle_counter,i+2)) ;					
- 						if(isColored[1][h][i+3])
+ 						if(isLaneColored[1][h][i+3])
  							Track[h].push(make_pair(Vehicle_counter,i+3)) ;															
  					}
  				}
@@ -751,18 +776,18 @@ void Vehicle_Counter(int frame_counter)
 
 	for(h = 0 ; h < numLanes ; h++){
 		for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
-			if(isColored[1][h][i]){
-					if(isColored[0][h][i] == 0){
+			if(isLaneColored[1][h][i]){
+					if(isLaneColored[0][h][i] == 0){
 						if(i!=0){
-							if(isColored[0][h][i-1]==0){
-								if(!((isColored[1][h][i+1])|(isColored[1][h][i-1]))){
+							if(isLaneColored[0][h][i-1]==0){
+								if(!((isLaneColored[1][h][i+1])|(isLaneColored[1][h][i-1]))){
 									Vehicle_counter++ ;
 									Track[h].push(make_pair(Vehicle_counter,i)) ;
 								}
 							}
 						}
 						else{
-							if(!(isColored[0][h][i+1])){
+							if(!(isLaneColored[0][h][i+1])){
 								Vehicle_counter++ ;
 								Track[h].push(make_pair(Vehicle_counter,i)) ;
 							}
@@ -781,7 +806,7 @@ void Vehicle_Counter(int frame_counter)
 
 	for(h = 0 ; h < numLanes ; h++){
 		i = realNumDivision[h]*virticalNumOfDivisions - 2 ;
-		if(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))&&(((!isColored[1][h][i+1])&&(isColored[0][h][i+1]))))
+		if(((!isLaneColored[1][h][i+1])&&(isLaneColored[0][h][i+1]))&&(((!isLaneColored[1][h][i+1])&&(isLaneColored[0][h][i+1]))))
 			Track[h].pop() ;
 
 		if(Track[h].front().second == -1)
@@ -806,9 +831,9 @@ void Vehicle_Counter(int frame_counter)
 		counter = 0 ;
 		i = 0 ; 
 		while(i < realNumDivision[h]*virticalNumOfDivisions){
-			if(isColored[1][h][i]){
+			if(isLaneColored[1][h][i]){
 				int k = 0; 
-				while(isColored[1][h][i+k])
+				while(isLaneColored[1][h][i+k])
 					k++ ;
 				TrackNew[h][counter] = i + k - 1 ;
 				i = i+k ;
@@ -838,9 +863,10 @@ void Vehicle_Counter(int frame_counter)
 
 	for(h=0 ; h < numLanes ; h++){
 		for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
-			isColored[0][h][i] = isColored[1][h][i] ;
+			isLaneColored[0][h][i] = isLaneColored[1][h][i] ;
 		}
 	}
+
 }
 
 void gridGenerator()

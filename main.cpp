@@ -405,7 +405,7 @@ int main()
         	cout<<"Lane : "<<h<<" :: " ;
         for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {
-        	cout<<(*it).first<<"--->"<<(*it).second<<"("<<LaneMap[*it].first<<","<<LaneMap[*it].second<<")"<<" : ";
+        	cout<<(*it).first<<"--->"<<(*it).second<<"("<<LaneMap[make_pair(h,(*it).second)].first<<","<<LaneMap[make_pair(h,(*it).second)].second<<")"<<" : ";
            sprintf(text1[c], "V%d", (int)((*it).first));
            putText(img, text1[c], cvPoint(LaneMap[make_pair(h,(*it).second)].first,LaneMap[make_pair(h,(*it).second)].second), 
           FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
@@ -417,7 +417,7 @@ int main()
         }
 
 		 imshow("Current_Image",img);
-		 waitKey();
+		// waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -834,9 +834,9 @@ void Vehicle_Counter(int frame_counter)
 			if(!Track[h].empty())	
 				Track[h].pop() ;
 
-		if(Track[h].front().second == -1)
-			if(!Track[h].empty())	
-				Track[h].pop() ;
+		// if(Track[h].front().second == -1)
+		// 	if(!Track[h].empty())	
+		// 		Track[h].pop() ;
 	}
 
 	/*********************************************************************/
@@ -964,9 +964,7 @@ pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][num
  								if(abs(searchPoint.first - sublane)>2)
  									; // cout<<"Lateral shift assumption"
  								else
- 								{	
- 									cout<<endl<<"Calculations"<<endl;
- 									cout<<centroid.first<<","<<centroid.second<<" :: "<<connectedPoints<<endl;
+ 								{
  									doubtPoints.push(searchPoint) ;
  									isVisited[searchPoint.first][searchPoint.second] = 1 ;
  									centroid.first = centroid.first + searchPoint.first ;

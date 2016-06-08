@@ -372,16 +372,16 @@ int main()
 		// 	cout<<endl ;
 		// }
 
-		cout<<endl ;
+		// cout<<endl ;
 
-		for(h = 0 ; h < 3*numLanes ; h++)
-		{
-			for(i = 0 ; i < realNumDivision[h/3]*virticalNumOfDivisions;i++)
-			{
-				cout<<isGridColored[1][h][i]<<" ";
-			}
-			cout<<endl;
-		}
+		// for(h = 0 ; h < 3*numLanes ; h++)
+		// {
+		// 	for(i = 0 ; i < realNumDivision[h/3]*virticalNumOfDivisions;i++)
+		// 	{
+		// 		cout<<isGridColored[1][h][i]<<" ";
+		// 	}
+		// 	cout<<endl;
+		// }
 
 		cout<<endl<<endl<<"*********************************"<<endl ;
 		/*******************************************************/

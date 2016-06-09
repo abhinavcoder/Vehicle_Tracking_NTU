@@ -85,6 +85,7 @@ bool wayToSort(int i , int j){ return i > j ;}
 
 iterable_queue< pair< int , int > > Track[numLanes] ;
 map< pair<int , int> , pair<int , int> > LaneMap , subLaneMap ; 
+map< int , pair< int , int > > VehicleMap ;
 
 Mat img,frame,background;
 Size s=Size(320,240);
@@ -126,8 +127,8 @@ float initialLines[2][3];
 /**************************/
 int main()
 {	
-    VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
-	//VideoCapture cap("./Videos/M-30.avi") ;
+    //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
+	VideoCapture cap("./Videos/M-30.avi") ;
 	if(!cap.isOpened())  // if not success, exit program
 	{
 		cout << "Cannot open the video file" << endl;
@@ -177,8 +178,8 @@ int main()
 	if(choice)
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
-		 auto_input.open("Input_Points_HighwayII.txt") ;
-		// auto_input.open("Input_Points_M-30.txt");
+		// auto_input.open("Input_Points_HighwayII.txt") ;
+		 auto_input.open("Input_Points_M-30.txt");
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -400,12 +401,16 @@ int main()
 
 		 char text1[100][255] ;
 		 int c = 0  ;
+
+		// for(int i = 1 ; i <= Vehicle_counter ; i++ )
+		// 	cout<<"Vehicle # "<<i<<" # is at Lane : "<<VehicleMap[i].first<<" and at index : "<<VehicleMap[i].second<<endl;
+        
         for(h = 0 ; h < numLanes ; h++)
         {	
         	cout<<"Lane : "<<h<<" :: " ;
         for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {
-        	cout<<(*it).first<<"--->"<<(*it).second<<"("<<LaneMap[make_pair(h,(*it).second)].first<<","<<LaneMap[make_pair(h,(*it).second)].second<<")"<<" : ";
+           cout<<(*it).first<<"--->"<<(*it).second<<"("<<LaneMap[make_pair(h,(*it).second)].first<<","<<LaneMap[make_pair(h,(*it).second)].second<<")"<<" : ";
            sprintf(text1[c], "V%d", (int)((*it).first));
            putText(img, text1[c], cvPoint(LaneMap[make_pair(h,(*it).second)].first,LaneMap[make_pair(h,(*it).second)].second), 
           FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
@@ -416,8 +421,10 @@ int main()
         
         }
 
+
+
 		 imshow("Current_Image",img);
-		// waitKey();
+		 waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -436,7 +443,7 @@ void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 	// Mouse click call back function 
 	/*********************************************/	
 	ofstream input;
-	input.open("input.txt",std::fstream::app);
+	input.open("point_store.txt",std::fstream::app);
      if  ( event == EVENT_LBUTTONDOWN )//Left click detect
      {
           cout << "Point - position (" << x << ", " << y << ")" << endl;
@@ -834,9 +841,9 @@ void Vehicle_Counter(int frame_counter)
 			if(!Track[h].empty())	
 				Track[h].pop() ;
 
-		// if(Track[h].front().second == -1)
-		// 	if(!Track[h].empty())	
-		// 		Track[h].pop() ;
+		if(Track[h].front().second == -2)
+			if(!Track[h].empty())	
+				Track[h].pop() ;
 	}
 
 	/*********************************************************************/
@@ -868,7 +875,7 @@ void Vehicle_Counter(int frame_counter)
  					centroidPoints = calculateCentroid(3*h+1,i,isVisited) ;
  					if((i>0 && !isLaneColored[1][h][i-1])|(i==0))
  					{
- 						cout<<endl<<"Centroid is ("<<centroidPoints.first<<","<<centroidPoints.second<<")"<<endl;
+ 						//cout<<endl<<"Centroid is ("<<centroidPoints.first<<","<<centroidPoints.second<<")"<<endl;
  						if(h==centroidPoints.first/3){
  							TrackNew[h][counter] = centroidPoints.second ;
  							counter++ ;
@@ -908,16 +915,41 @@ void Vehicle_Counter(int frame_counter)
  	}
  	*/
 
+ 	static map< int , vector<int> > Position ;
+
     for(h = 0 ; h < numLanes ; h++)
     {	
     	counter = 0 ; 
         for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
-        {
-          	(*it).second = TrackNew[h][counter] ;
-            counter++ ;
+        {	
+        	
+        	if((Position[(*it).first].size() > 1)&&(TrackNew[h][counter] == -1)&&(Position[(*it).first].front()==-1)&&(Position[(*it).first][Position[(*it).first].size()-2] == -1))
+			{
+				cout<<"Working"<<endl;
+				(*it).second = -2  ;  // just a different reference 
+				counter++ ;
+			}
+			else
+			{
+          	 	(*it).second = TrackNew[h][counter] ;
+          		VehicleMap[(*it).first] = make_pair(h,(*it).second) ;
+          		Position[(*it).first].push_back(TrackNew[h][counter]) ;
+            	counter++ ;
+        	}
         }
-    }	
+    	
 
+    for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
+    {	
+    	cout<<"Vehicle : "<<(*it).first<<" :: ";
+    	for(int i = 0 ; i < Position[(*it).first].size() ; i++)
+    	{
+    		cout<<Position[(*it).first][i]<<" , " ;
+    	}
+    	cout<<endl;
+    }
+	
+	}
     /*****************************************************/
     //Updating previous colored matrix with current matrix
     /*****************************************************/
@@ -935,7 +967,6 @@ void Vehicle_Counter(int frame_counter)
  	/********************/
 pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions])
 {	
-		cout<<endl<<"Lane no. : "<<sublane/3<<" , Index no. : "<<index<<endl ;
 
  		queue< pair< int , int > > doubtPoints ;
  		pair<int , int> centroid = make_pair(0,0) ;
@@ -947,7 +978,6 @@ pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][num
  		{
  			point = doubtPoints.front() ;
  			isVisited[point.first][point.second] = 1 ;
- 			cout<<"["<<point.first<<","<<point.second<<"] , ";
  			doubtPoints.pop();
  			for(int i = -1 ; i <= 1 ; i++ )
  			{
@@ -959,7 +989,7 @@ pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][num
  						if((!isVisited[searchPoint.first][searchPoint.second])&&(isGridColored[1][searchPoint.first][searchPoint.second]))
  						{
  							if((searchPoint.first/3 == sublane/3)&&(!isLaneColored[1][searchPoint.first/3][searchPoint.second]))
- 								;//cout<<"Vertical shift assumption"<<endl ;
+ 								;//"Vertical shift assumption"<<endl ;
  							else
  								if(abs(searchPoint.first - sublane)>2)
  									; // cout<<"Lateral shift assumption"

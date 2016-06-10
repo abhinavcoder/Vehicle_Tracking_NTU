@@ -128,7 +128,8 @@ float initialLines[2][3];
 int main()
 {	
     //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
-	VideoCapture cap("./Videos/M-30.avi") ;
+	//VideoCapture cap("./Videos/M-30.avi") ;
+	VideoCapture cap("./Videos/M-30_HD.avi") ;
 	if(!cap.isOpened())  // if not success, exit program
 	{
 		cout << "Cannot open the video file" << endl;
@@ -152,6 +153,7 @@ int main()
 	int backDoneCounter;
 
 	bool capSuccess = cap.read(img);
+	capSuccess = cap.read(img) ;
 		
 	//check whether the image is loaded or not
 	if (!capSuccess) 
@@ -179,7 +181,8 @@ int main()
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
 		// auto_input.open("Input_Points_HighwayII.txt") ;
-		 auto_input.open("Input_Points_M-30.txt");
+		// auto_input.open("Input_Points_M-30.txt");
+		auto_input.open("Input_Points_M-30_HD.txt");
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -814,7 +817,7 @@ void Vehicle_Counter(int frame_counter)
 							if(!((isLaneColored[1][h][i+1])|(isLaneColored[1][h][i-1]))){
 								// Constraint on new generation of vehicle
 								std::deque< pair<int , int > > ::iterator it=Track[h].begin() ;
-								if(Track[h].empty()){
+								if(Track[h].empty()&&(i < realNumDivision[h]*virticalNumOfDivisions - 3 /*not for Lane change*/) ){
 									Vehicle_counter++ ; 
 									Track[h].push(make_pair(Vehicle_counter,i)) ;
 								}
@@ -823,7 +826,7 @@ void Vehicle_Counter(int frame_counter)
 									{
 										if((*it).second >= 0 )
 										{
-											if( (i < (*it).second)/* Add condiiton for lane change also */)
+											if( (i < (*it).second)&&(i < realNumDivision[h]*virticalNumOfDivisions - 3 /*not for Lane change*/)/* Add condiiton for lane change also */)
 											{
 												Vehicle_counter++ ; 
 												Track[h].push(make_pair(Vehicle_counter,i)) ;
@@ -858,7 +861,7 @@ void Vehicle_Counter(int frame_counter)
 
 	for(h = 0 ; h < numLanes ; h++){
 		i = realNumDivision[h]*virticalNumOfDivisions - 2 ;
-		if(((!isLaneColored[1][h][i+1])&&(isLaneColored[0][h][i+1]))&&(((!isLaneColored[1][h][i+1])&&(isLaneColored[0][h][i+1]))))
+		if((!isLaneColored[1][h][i+1])&&(isLaneColored[0][h][i+1]))
 			if(!Track[h].empty())	
 				Track[h].pop() ;
 

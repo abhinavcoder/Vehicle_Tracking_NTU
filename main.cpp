@@ -396,7 +396,7 @@ int main()
 		cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, 1.0 ,1.0 ,0,1);
 
 		//putText (img, text, cvPoint(30,100), &font, cvScalar(255,255,0));
-		 putText(img, text, cvPoint(60,200), 
+		 putText(img, text, cvPoint(60,220), 
           FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
 
 		 char text1[100][255] ;
@@ -808,23 +808,44 @@ void Vehicle_Counter(int frame_counter)
 	for(h = 0 ; h < numLanes ; h++){
 		for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
 			if(isLaneColored[1][h][i]){
-					if(isLaneColored[0][h][i] == 0){
-						if(i!=0){
-							if(isLaneColored[0][h][i-1]==0){
-								if(!((isLaneColored[1][h][i+1])|(isLaneColored[1][h][i-1]))){
-									Vehicle_counter++ ;
+				if(isLaneColored[0][h][i] == 0){
+					if(i!=0){
+						if(isLaneColored[0][h][i-1]==0){
+							if(!((isLaneColored[1][h][i+1])|(isLaneColored[1][h][i-1]))){
+								// Constraint on new generation of vehicle
+								std::deque< pair<int , int > > ::iterator it=Track[h].begin() ;
+								if(Track[h].empty()){
+									Vehicle_counter++ ; 
 									Track[h].push(make_pair(Vehicle_counter,i)) ;
 								}
-							}
-						}
-						else{
-							if(!(isLaneColored[0][h][i+1])){
-								Vehicle_counter++ ;
-								Track[h].push(make_pair(Vehicle_counter,i)) ;
-							}
-						}
+								else{
+									while((it!=Track[h].end()))
+									{
+										if((*it).second >= 0 )
+										{
+											if( (i < (*it).second)/* Add condiiton for lane change also */)
+											{
+												Vehicle_counter++ ; 
+												Track[h].push(make_pair(Vehicle_counter,i)) ;
 
+											}
+											break ;
+
+										}
+										it++ ;
+									} 
+						    	}
+							}
+						}
 					}
+					else{
+						if(!(isLaneColored[0][h][i+1])){
+							Vehicle_counter++ ;
+							Track[h].push(make_pair(Vehicle_counter,i)) ;
+						}
+					}
+
+				}
 			}
 		
 		}
@@ -891,6 +912,13 @@ void Vehicle_Counter(int frame_counter)
 	 	sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions , wayToSort);
 	 }
  	
+ 	// for(h = 0 ; h < numLanes ; h++)
+ 	// {
+ 	// 	for(i = 0 ; i < 2*virticalNumOfDivisions ; i++)
+ 	// 		cout<<TrackNew[h][i]<<" , " ;
+ 	// 	cout<<endl ;
+ 	// }
+
  	/*
     int counter = 0 ; 
     // get the new position of the cars 
@@ -915,6 +943,7 @@ void Vehicle_Counter(int frame_counter)
  	}
  	*/
 
+
  	static map< int , vector<int> > Position ;
 
     for(h = 0 ; h < numLanes ; h++)
@@ -922,11 +951,23 @@ void Vehicle_Counter(int frame_counter)
     	counter = 0 ; 
         for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {	
-        	
-        	if((Position[(*it).first].size() > 1)&&(TrackNew[h][counter] == -1)&&(Position[(*it).first].front()==-1)&&(Position[(*it).first][Position[(*it).first].size()-2] == -1))
+        	cout<<"Vehicle : "<<(*it).first<<" :: ";
+        	int i = 0 ;
+        	bool stagnant = true ;
+        	while(i < Position[(*it).first].size() && i < 4)
+        	{
+        		if(Position[(*it).first][Position[(*it).first].size()-1 - i]!= -1)
+        		{
+        			stagnant = false ;
+        			break ;
+        		}
+        		i++ ;
+        	}
+
+        	if((Position[(*it).first].size() > 3)&&(TrackNew[h][counter] == -1)&& stagnant)
 			{
-				cout<<"Working"<<endl;
-				(*it).second = -2  ;  // just a different reference 
+				cout<<" Detected Two false stagnant for vehicle : "<<(*it).first<<endl;
+				(*it).second = -2  ;  // just a different reference
 				counter++ ;
 			}
 			else
@@ -934,20 +975,10 @@ void Vehicle_Counter(int frame_counter)
           	 	(*it).second = TrackNew[h][counter] ;
           		VehicleMap[(*it).first] = make_pair(h,(*it).second) ;
           		Position[(*it).first].push_back(TrackNew[h][counter]) ;
+          		//cout<<"Vehicle : "<<(*it).first<<" Position : "<<TrackNew[h][counter]<<" , ";
             	counter++ ;
         	}
         }
-    	
-
-    for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
-    {	
-    	cout<<"Vehicle : "<<(*it).first<<" :: ";
-    	for(int i = 0 ; i < Position[(*it).first].size() ; i++)
-    	{
-    		cout<<Position[(*it).first][i]<<" , " ;
-    	}
-    	cout<<endl;
-    }
 	
 	}
     /*****************************************************/

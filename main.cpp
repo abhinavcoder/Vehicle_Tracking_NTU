@@ -128,8 +128,9 @@ float initialLines[2][3];
 int main()
 {	
     //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
-	//VideoCapture cap("./Videos/M-30.avi") ;
-	VideoCapture cap("./Videos/M-30_HD.avi") ;
+	VideoCapture cap("./Videos/M-30.avi") ;
+	//VideoCapture cap("./Videos/M-30_HD.avi") ;
+	double fps = cap.get(CV_CAP_PROP_FPS);
 	if(!cap.isOpened())  // if not success, exit program
 	{
 		cout << "Cannot open the video file" << endl;
@@ -154,7 +155,8 @@ int main()
 
 	bool capSuccess = cap.read(img);
 	capSuccess = cap.read(img) ;
-		
+	//VideoWriter out_capture("./Results/highwayII_Output.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));
+	VideoWriter out_capture("./Results/M-30.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));	
 	//check whether the image is loaded or not
 	if (!capSuccess) 
 	{
@@ -180,9 +182,9 @@ int main()
 	if(choice)
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
-		// auto_input.open("Input_Points_HighwayII.txt") ;
-		// auto_input.open("Input_Points_M-30.txt");
-		auto_input.open("Input_Points_M-30_HD.txt");
+		// auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
+		 auto_input.open("./Input_Points/Input_Points_M-30.txt");
+		//auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -391,7 +393,6 @@ int main()
 		/*******************************************************/
 		// Printing vehicle counter and tracked vehicle on image
 		/*******************************************************/
-
         char text[255]; 
         sprintf(text, "Vehicles Passed : %d", (int)Vehicle_counter);
 
@@ -427,7 +428,11 @@ int main()
 
 
 		 imshow("Current_Image",img);
-		 waitKey();
+		 Mat colorframe ;
+		 cvtColor(img, colorframe, CV_GRAY2BGR);
+		 out_capture.write(colorframe);
+		//if(frame_counter > 370) 
+		 	waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -778,6 +783,7 @@ void Vehicle_Counter(int frame_counter)
 	// Code for Lane change 
 	/*********************************************/
 
+
 	/************************************************************/
 	// Updating colored matrix for first frame & pushing to queue
 	/************************************************************/
@@ -787,19 +793,19 @@ void Vehicle_Counter(int frame_counter)
     	// get the new position of the cars 
 		for(h=0;h<numLanes;h++)
 		{
-			i = 0 ; 
-			while(i < realNumDivision[h]*virticalNumOfDivisions)
+			i = realNumDivision[h]*virticalNumOfDivisions - 1 ; 
+			while(i >= 0 )
 			{
 				if(isLaneColored[1][h][i]){
 					int k = 0; 
-					while(isLaneColored[1][h][i+k])
+					while(isLaneColored[1][h][i-k])
 						k++ ;
 					Vehicle_counter++ ;
-					Track[h].push(make_pair(Vehicle_counter,i + k - 1)) ;
-					i = i+k ;
+					Track[h].push(make_pair(Vehicle_counter,i - k + 1)) ;
+					i = i-k ;
 				}
 				else 
-					i++ ; 
+					i-- ; 
 			}
 		}
 	}
@@ -809,17 +815,18 @@ void Vehicle_Counter(int frame_counter)
 	/****************************************************************/
 	else{
 	for(h = 0 ; h < numLanes ; h++){
-		for(i = 0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
-			if(isLaneColored[1][h][i]){
-				if(isLaneColored[0][h][i] == 0){
+		for(i = realNumDivision[h]*virticalNumOfDivisions - 1 ; i >=0 ; i--){ // Reverse : As farthest detected should be pushed first
+			if((isLaneColored[1][h][i]) && (!isLaneColored[0][h][i]))
+			{
 					if(i!=0){
 						if(isLaneColored[0][h][i-1]==0){
 							if(!((isLaneColored[1][h][i+1])|(isLaneColored[1][h][i-1]))){
 								// Constraint on new generation of vehicle
 								std::deque< pair<int , int > > ::iterator it=Track[h].begin() ;
-								if(Track[h].empty()&&(i < realNumDivision[h]*virticalNumOfDivisions - 3 /*not for Lane change*/) ){
+								if(Track[h].empty()/*not for Lane change*/){
 									Vehicle_counter++ ; 
 									Track[h].push(make_pair(Vehicle_counter,i)) ;
+									cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
 								}
 								else{
 									while((it!=Track[h].end()))
@@ -830,6 +837,7 @@ void Vehicle_Counter(int frame_counter)
 											{
 												Vehicle_counter++ ; 
 												Track[h].push(make_pair(Vehicle_counter,i)) ;
+												cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
 
 											}
 											break ;
@@ -845,16 +853,18 @@ void Vehicle_Counter(int frame_counter)
 						if(!(isLaneColored[0][h][i+1])){
 							Vehicle_counter++ ;
 							Track[h].push(make_pair(Vehicle_counter,i)) ;
+						    cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
 						}
 					}
 
-				}
+				
 			}
 		
 		}
 				
 	}
 	}
+
 	/********************************/
 	// Popping out vehicle from queue 
 	/********************************/
@@ -913,38 +923,12 @@ void Vehicle_Counter(int frame_counter)
 
 	 	}
 	 	sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions , wayToSort);
-	 }
- 	
- 	// for(h = 0 ; h < numLanes ; h++)
- 	// {
- 	// 	for(i = 0 ; i < 2*virticalNumOfDivisions ; i++)
- 	// 		cout<<TrackNew[h][i]<<" , " ;
- 	// 	cout<<endl ;
- 	// }
 
- 	/*
-    int counter = 0 ; 
-    // get the new position of the cars 
-	for(h=0;h<numLanes;h++){
-		counter = 0 ;
-		i = 0 ; 
-		while(i < realNumDivision[h]*virticalNumOfDivisions){
-			if(isLaneColored[1][h][i]){
-				int k = 0; 
-				while(isLaneColored[1][h][i+k])
-					k++ ;
-				TrackNew[h][counter] = i + k - 1 ;
-				i = i+k ;
-				counter++ ; 
-			}
-			else 
-				i++ ; 
-		}
-		// Sorting in descending order 
- 		sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions , wayToSort);
- 		
- 	}
- 	*/
+	 	for( i = 0 ; i < 2*virticalNumOfDivisions ; i++ )
+	 		cout<<TrackNew[h][i]<<" , ";
+	 	cout<<endl ;
+	 }
+ 
 
 
  	static map< int , vector<int> > Position ;
@@ -954,7 +938,6 @@ void Vehicle_Counter(int frame_counter)
     	counter = 0 ; 
         for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {	
-        	cout<<"Vehicle : "<<(*it).first<<" :: ";
         	int i = 0 ;
         	bool stagnant = true ;
         	while(i < Position[(*it).first].size() && i < 4)
@@ -969,17 +952,30 @@ void Vehicle_Counter(int frame_counter)
 
         	if((Position[(*it).first].size() > 3)&&(TrackNew[h][counter] == -1)&& stagnant)
 			{
-				cout<<" Detected Two false stagnant for vehicle : "<<(*it).first<<endl;
+				cout<<" Detected Two false stagnant frames for vehicle : "<<(*it).first<<endl;
 				(*it).second = -2  ;  // just a different reference
 				counter++ ;
 			}
 			else
-			{
-          	 	(*it).second = TrackNew[h][counter] ;
+			{	
+				if((*it).second <= 0)
+				{
+          	 		(*it).second = TrackNew[h][counter] ;
+          		     counter ++ ;
+          		}
+          		else
+          			if(abs((*it).second - TrackNew[h][counter]) < 3 )
+          			{
+          				(*it).second = TrackNew[h][counter] ;
+          				counter ++ ;
+          			}
+          			else
+         				(*it).second = -1 ;
+         
           		VehicleMap[(*it).first] = make_pair(h,(*it).second) ;
-          		Position[(*it).first].push_back(TrackNew[h][counter]) ;
+          		Position[(*it).first].push_back((*it).second) ;
           		//cout<<"Vehicle : "<<(*it).first<<" Position : "<<TrackNew[h][counter]<<" , ";
-            	counter++ ;
+            	//counter++ ;
         	}
         }
 	
@@ -996,9 +992,6 @@ void Vehicle_Counter(int frame_counter)
 
 }
 
- 	/********************/
- 	//Function definition
- 	/********************/
 pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions])
 {	
 

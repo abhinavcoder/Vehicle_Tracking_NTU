@@ -650,37 +650,37 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 		// Old implementation 
 		/********************/
 
-		if(varM[laneNum][blockNum]>varI[laneNum][blockNum])
-		{
-			deltaV=(varM[laneNum][blockNum]-varI[laneNum][blockNum])/varM[laneNum][blockNum];
-		}
-		else
-		{
-			deltaV=(varI[laneNum][blockNum]-varM[laneNum][blockNum])/varI[laneNum][blockNum];
-		}
+		// if(varM[laneNum][blockNum]>varI[laneNum][blockNum])
+		// {
+		// 	deltaV=(varM[laneNum][blockNum]-varI[laneNum][blockNum])/varM[laneNum][blockNum];
+		// }
+		// else
+		// {
+		// 	deltaV=(varI[laneNum][blockNum]-varM[laneNum][blockNum])/varI[laneNum][blockNum];
+		// }
 
-		//%FG calculation
-		float fgPersentage;
+		// //%FG calculation
+		// float fgPersentage;
 		
-		fgPersentage=(float)forgroundCounter/(float)counter;
+		// fgPersentage=(float)forgroundCounter/(float)counter;
 
-		//occ calculation
-		float occ;
+		// //occ calculation
+		// float occ;
 
-		occ= (2*deltaV*(float)fgPersentage)/(deltaV+(float)fgPersentage);
-		PV = occ ;
-		thresh = 0.3 ;
+		// occ= (2*deltaV*(float)fgPersentage)/(deltaV+(float)fgPersentage);
+		// PV = occ ;
+		// thresh = 0.3 ;
 		
 		/******************************/
 		// New Kratika's implementation
 		/******************************/
 
-		// deltaV = fabs(varM[laneNum][blockNum] - varI[laneNum][blockNum]) ;
-		// float fx =  (1/267.798)*exp(-deltaV/267.798) ;
-  //       if (fx > maxfx)
-  // 		 	maxfx = fx;
-  //       PV = 1 - (fx/maxfx);
-  // 		thresh = 0.88 ;
+		deltaV = fabs(varM[laneNum][blockNum] - varI[laneNum][blockNum]) ;
+		float fx =  (1/267.798)*exp(-deltaV/267.798) ;
+        if (fx > maxfx)
+  		 	maxfx = fx;
+        PV = 1 - (fx/maxfx);
+  		thresh = 0.5 ;
 
 		if(PV>thresh)
 		{	

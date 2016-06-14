@@ -73,7 +73,11 @@ void Occupancy(Point p4 , Point p3 , Point p2 , Point p1 , int laneNum , int blo
 void varianceCalculator(int a,int counter);
 void varOfVarCalculator(int blockNum,int laneNum);
 void shifter();
-void Vehicle_Counter(int frame_counter);
+void Vehicle_Counter( int frame_counter);
+void Vehicle_Remove();
+void Vehicle_Localize();
+void Vehicle_Tracker(int frame_counter);
+
 int round(float a);
 pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions]) ;
 
@@ -86,6 +90,7 @@ bool wayToSort(int i , int j){ return i > j ;}
 iterable_queue< pair< int , int > > Track[numLanes] ;
 map< pair<int , int> , pair<int , int> > LaneMap , subLaneMap ; 
 map< int , pair< int , int > > VehicleMap ;
+static map< int , vector<int> > Position ;
 
 Mat img,frame,background;
 Size s=Size(320,240);
@@ -342,7 +347,7 @@ int main()
 		if(Vehicle_Track)
 		{
 			cout<<frame_counter<<endl;
-			Vehicle_Counter(frame_counter);
+			Vehicle_Tracker(frame_counter);
 		}
 		// cout<<"Vehicles passed : "<<Vehicle_counter<<endl;
 		// clock_t end = clock();
@@ -431,7 +436,7 @@ int main()
 		 Mat colorframe ;
 		 cvtColor(img, colorframe, CV_GRAY2BGR);
 		 out_capture.write(colorframe);
-		//if(frame_counter > 370) 
+		 if(frame_counter > 410) 
 		 	waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
@@ -775,11 +780,10 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 		}
 }
 
-void Vehicle_Counter(int frame_counter)
+void Vehicle_Counter( int frame_counter)
 {
-	int h , i ; 
-	int isVisited[numLanes*3][numDivision*virticalNumOfDivisions] = {0} ;
-	/*********************************************/
+   int h , i ;
+   	/*********************************************/
 	// Code for Lane change 
 	/*********************************************/
 
@@ -802,6 +806,7 @@ void Vehicle_Counter(int frame_counter)
 						k++ ;
 					Vehicle_counter++ ;
 					Track[h].push(make_pair(Vehicle_counter,i - k + 1)) ;
+					Position[Vehicle_counter].push_back(i-k+1) ;
 					i = i-k ;
 				}
 				else 
@@ -826,7 +831,8 @@ void Vehicle_Counter(int frame_counter)
 								if(Track[h].empty()/*not for Lane change*/){
 									Vehicle_counter++ ; 
 									Track[h].push(make_pair(Vehicle_counter,i)) ;
-									cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
+									Position[Vehicle_counter].push_back(i) ;
+									//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
 								}
 								else{
 									while((it!=Track[h].end()))
@@ -837,7 +843,8 @@ void Vehicle_Counter(int frame_counter)
 											{
 												Vehicle_counter++ ; 
 												Track[h].push(make_pair(Vehicle_counter,i)) ;
-												cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
+												Position[Vehicle_counter].push_back(i) ;
+												//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
 
 											}
 											break ;
@@ -853,7 +860,8 @@ void Vehicle_Counter(int frame_counter)
 						if(!(isLaneColored[0][h][i+1])){
 							Vehicle_counter++ ;
 							Track[h].push(make_pair(Vehicle_counter,i)) ;
-						    cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
+							Position[Vehicle_counter].push_back(i) ;
+						    //cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
 						}
 					}
 
@@ -865,22 +873,46 @@ void Vehicle_Counter(int frame_counter)
 	}
 	}
 
+}
+
+void Vehicle_Remove()
+{
+	int h , i ; 
 	/********************************/
 	// Popping out vehicle from queue 
 	/********************************/
-
-	for(h = 0 ; h < numLanes ; h++){
+	for(h = 0 ; h < numLanes ; h++)
+	{
 		i = realNumDivision[h]*virticalNumOfDivisions - 2 ;
 		if((!isLaneColored[1][h][i+1])&&(isLaneColored[0][h][i+1]))
 			if(!Track[h].empty())	
+			{	
+				cout<<"Vehicle : "<<Track[h].front().first<<"  popped"<<endl;
 				Track[h].pop() ;
+				continue ;
+			}
 
-		if(Track[h].front().second == -2)
-			if(!Track[h].empty())	
-				Track[h].pop() ;
+	// Change the definition of poping here 
+		if(!Track[h].empty())
+		{
+		   int vID = Track[h].front().first ;
+		   int topIndex = Position[vID].size() - 1 ;
+		   if((Position[vID].size() > 2) && Position[vID][topIndex]==-1 && Position[vID][topIndex-1]==-1 && Position[vID][topIndex-2]==-1 )
+		   {
+		   		cout<<"Vehicle : "<<Track[h].front().first<<"  popped"<<endl;
+		   		Track[h].pop();
+		   }	
+
+		}
 	}
+}
 
-	/*********************************************************************/
+void Vehicle_Localize()
+{
+	int h , i ; 
+	int isVisited[numLanes*3][numDivision*virticalNumOfDivisions] = {0} ;
+
+    /*********************************************************************/
 	//Vehicle tracking by comparing it with current frame's set of patches
 	/*********************************************************************/
 
@@ -896,6 +928,7 @@ void Vehicle_Counter(int frame_counter)
 
  	pair<int , int> centroidPoints ;
  	int counter ;
+ 	cout<<"Printing distance matrix"<<endl ;
  	for(h=0;h<numLanes;h++)
  	{	
  		counter = 0 ;
@@ -915,7 +948,8 @@ void Vehicle_Counter(int frame_counter)
  							counter++ ;
  						}
  						else
- 							cout<<"Lane change detected";
+ 							cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > "<<endl ;
+
  					}
  				}
  			}
@@ -928,68 +962,90 @@ void Vehicle_Counter(int frame_counter)
 	 		cout<<TrackNew[h][i]<<" , ";
 	 	cout<<endl ;
 	 }
- 
-
-
- 	static map< int , vector<int> > Position ;
+	 cout<<endl ;
 
     for(h = 0 ; h < numLanes ; h++)
     {	
     	counter = 0 ; 
+    	int numVehicles = 0 ; 
+        for(int j = 0 ; j < 2*virticalNumOfDivisions ; j++)
+        	if(TrackNew[h][j]==-1)
+        		break ;
+        	else 
+        		numVehicles++ ;
+        
         for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {	
-        	int i = 0 ;
-        	bool stagnant = true ;
-        	while(i < Position[(*it).first].size() && i < 4)
-        	{
-        		if(Position[(*it).first][Position[(*it).first].size()-1 - i]!= -1)
-        		{
-        			stagnant = false ;
-        			break ;
-        		}
-        		i++ ;
-        	}
-
-        	if((Position[(*it).first].size() > 3)&&(TrackNew[h][counter] == -1)&& stagnant)
+			
+			if(numVehicles == Track[h].size())
 			{
-				cout<<" Detected Two false stagnant frames for vehicle : "<<(*it).first<<endl;
-				(*it).second = -2  ;  // just a different reference
+				/* Exact correspondance */
+				(*it).second = TrackNew[h][counter] ;
+				Position[(*it).first].push_back((*it).second) ;
 				counter++ ;
+
 			}
 			else
-			{	
-				if((*it).second <= 0)
+			{
+				/* Missing correspondace , Lane change not included */
+
+				// Account for previous frames also for calculating the distance factor 
+			    // Account for the less or more than function for implementing Lane change 
+			    
+			    if(TrackNew[h][counter]==-1)			    	
+			    {	
+			    	(*it).second = TrackNew[h][counter] ;
+			    	Position[(*it).first].push_back((*it).second) ;
+			    	counter++ ;
+			    	continue ;
+			    }
+
+			    int topIndex = Position[(*it).first].size() - 1 ;
+			    i = 0 ;
+			   	while(i < 3)
 				{
-          	 		(*it).second = TrackNew[h][counter] ;
-          		     counter ++ ;
-          		}
-          		else
-          			if(abs((*it).second - TrackNew[h][counter]) < 3 )
-          			{
-          				(*it).second = TrackNew[h][counter] ;
-          				counter ++ ;
-          			}
-          			else
-         				(*it).second = -1 ;
-         
-          		VehicleMap[(*it).first] = make_pair(h,(*it).second) ;
-          		Position[(*it).first].push_back((*it).second) ;
-          		//cout<<"Vehicle : "<<(*it).first<<" Position : "<<TrackNew[h][counter]<<" , ";
-            	//counter++ ;
-        	}
+			 	   	if(Position[(*it).first][topIndex - i] != -1)
+			    	{
+			    		if(abs(Position[(*it).first][topIndex - i] - TrackNew[h][counter]) < 3+i)
+			    		{
+			    			(*it).second = TrackNew[h][counter] ;
+			    			Position[(*it).first].push_back((*it).second) ;
+			    			counter++ ;
+			    		}
+			    		else
+			    		{
+			    			(*it).second = -1 ;
+			    			Position[(*it).first].push_back((*it).second) ;
+			    		}
+			    		break ;
+			    	}
+			    	i++ ;
+				}
+
+
+			}
+		int vID = (*it).first ;
+		int topIndex = Position[vID].size() - 1 ;
+		cout<<"Last three position of V < "<<vID<<" > :: "<<Position[vID][topIndex]<<" "<<Position[vID][topIndex-1]<<" "<<Position[vID][topIndex-2]<<endl ;
         }
 	
 	}
+}
+
+void Vehicle_Tracker(int frame_counter)
+{
+    int h , i ;
+    Vehicle_Counter(frame_counter) ;
+    Vehicle_Localize(); 
+    Vehicle_Remove() ;
     /*****************************************************/
     //Updating previous colored matrix with current matrix
     /*****************************************************/
-
 	for(h=0 ; h < numLanes ; h++){
 		for(i=0 ; i < realNumDivision[h]*virticalNumOfDivisions ; i++){
 			isLaneColored[0][h][i] = isLaneColored[1][h][i] ;
 		}
 	}
-
 }
 
 pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions])
@@ -1026,6 +1082,7 @@ pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][num
  									isVisited[searchPoint.first][searchPoint.second] = 1 ;
  									centroid.first = centroid.first + searchPoint.first ;
  									centroid.second = centroid.second + searchPoint.second ;
+ 									//cout<<"( "<<searchPoint.first<<" , "<<searchPoint.second<<" ) , " ;
  									connectedPoints++ ;
  								}
  						}
@@ -1034,8 +1091,11 @@ pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][num
  			}
 
  		}
-
- 		centroid.first  = centroid.first / connectedPoints ;
+ 		//cout<<endl<<"Sum : "<<centroid.first<<" , connectedPoints : "<<connectedPoints;
+ 		float temp = (float)(centroid.first)/(float)(connectedPoints) ;
+ 		//cout<<" "<<temp ;
+ 		centroid.first  = round(temp) ;
+ 	    //cout<<" centroid Point : "<<centroid.first ;
  		centroid.second = centroid.second / connectedPoints ;
  		return centroid;
 }
@@ -1270,7 +1330,6 @@ void gridGenerator()
 			}
 		}
     }
-
 }
 
 void varianceCalculator(int a,int counter)

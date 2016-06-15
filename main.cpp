@@ -69,7 +69,6 @@ float calC(Point p1,Point p2,float A,float B);
 bool detectPosivite(int a);
 void gridGenerator();
 void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum);
-void Occupancy(Point p4 , Point p3 , Point p2 , Point p1 , int laneNum , int blockNum) ;
 void varianceCalculator(int a,int counter);
 void varOfVarCalculator(int blockNum,int laneNum);
 void shifter();
@@ -91,6 +90,7 @@ iterable_queue< pair< int , int > > Track[numLanes] ;
 map< pair<int , int> , pair<int , int> > LaneMap , subLaneMap ; 
 map< int , pair< int , int > > VehicleMap ;
 static map< int , vector<int> > Position ;
+map< int , pair< bool , pair< int , int > > > lanechangeMap ;
 
 Mat img,frame,background;
 Size s=Size(320,240);
@@ -394,7 +394,6 @@ int main()
 		// 	cout<<endl;
 		// }
 
-		cout<<endl<<endl<<"*********************************"<<endl ;
 		/*******************************************************/
 		// Printing vehicle counter and tracked vehicle on image
 		/*******************************************************/
@@ -413,7 +412,7 @@ int main()
 
 		// for(int i = 1 ; i <= Vehicle_counter ; i++ )
 		// 	cout<<"Vehicle # "<<i<<" # is at Lane : "<<VehicleMap[i].first<<" and at index : "<<VehicleMap[i].second<<endl;
-        
+        cout<<endl;
         for(h = 0 ; h < numLanes ; h++)
         {	
         	cout<<"Lane : "<<h<<" :: " ;
@@ -436,7 +435,8 @@ int main()
 		 Mat colorframe ;
 		 cvtColor(img, colorframe, CV_GRAY2BGR);
 		 out_capture.write(colorframe);
-		 if(frame_counter > 410) 
+		 cout<<endl<<endl<<"*********************************"<<endl ;
+		 if(frame_counter > 500) 
 		 	waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
@@ -483,7 +483,6 @@ void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 	 }
 	 input.close();
 }
-
 void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 {		
 	/**********************************************************************/
@@ -807,6 +806,8 @@ void Vehicle_Counter( int frame_counter)
 					Vehicle_counter++ ;
 					Track[h].push(make_pair(Vehicle_counter,i - k + 1)) ;
 					Position[Vehicle_counter].push_back(i-k+1) ;
+					lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
+
 					i = i-k ;
 				}
 				else 
@@ -832,6 +833,7 @@ void Vehicle_Counter( int frame_counter)
 									Vehicle_counter++ ; 
 									Track[h].push(make_pair(Vehicle_counter,i)) ;
 									Position[Vehicle_counter].push_back(i) ;
+									lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
 									//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
 								}
 								else{
@@ -844,6 +846,7 @@ void Vehicle_Counter( int frame_counter)
 												Vehicle_counter++ ; 
 												Track[h].push(make_pair(Vehicle_counter,i)) ;
 												Position[Vehicle_counter].push_back(i) ;
+												lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
 												//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
 
 											}
@@ -861,6 +864,7 @@ void Vehicle_Counter( int frame_counter)
 							Vehicle_counter++ ;
 							Track[h].push(make_pair(Vehicle_counter,i)) ;
 							Position[Vehicle_counter].push_back(i) ;
+						    lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
 						    //cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
 						}
 					}
@@ -872,7 +876,6 @@ void Vehicle_Counter( int frame_counter)
 				
 	}
 	}
-
 }
 
 void Vehicle_Remove()
@@ -943,12 +946,41 @@ void Vehicle_Localize()
  					if((i>0 && !isLaneColored[1][h][i-1])|(i==0))
  					{
  						//cout<<endl<<"Centroid is ("<<centroidPoints.first<<","<<centroidPoints.second<<")"<<endl;
- 						if(h==centroidPoints.first/3){
+ 						if(h==centroidPoints.first/3)
+ 						{
  							TrackNew[h][counter] = centroidPoints.second ;
  							counter++ ;
  						}
  						else
+ 						{
+ 							cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > at index : "<<centroidPoints.second<<endl ;
+ 							waitKey();
+ 						}
+ 							
+
+ 					}
+ 				}
+ 			}
+ 			else
+ 			{
+ 				if((h<numLanes-1) && (isGridColored[1][3*h+2][i]) && (isGridColored[1][3*(h+1)][i]))
+ 				{
+ 					centroidPoints = calculateCentroid(3*h+2,i,isVisited) ;
+ 					if((i>0 && !isLaneColored[1][h][i-1])|(i==0))
+ 					{
+ 						//cout<<endl<<"Centroid is ("<<centroidPoints.first<<","<<centroidPoints.second<<")"<<endl;
+ 						if(h==centroidPoints.first/3)
+ 						{
+ 							TrackNew[h][counter] = centroidPoints.second ;
+ 							counter++ ;
+ 						}
+ 						else
+ 						{
  							cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > "<<endl ;
+ 							cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > at index : "<<centroidPoints.second<<endl ;
+ 							waitKey() ;
+ 						}
+ 							
 
  					}
  				}
@@ -958,9 +990,9 @@ void Vehicle_Localize()
 	 	}
 	 	sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions , wayToSort);
 
-	 	for( i = 0 ; i < 2*virticalNumOfDivisions ; i++ )
-	 		cout<<TrackNew[h][i]<<" , ";
-	 	cout<<endl ;
+	 	// for( i = 0 ; i < 2*virticalNumOfDivisions ; i++ )
+	 	// 	cout<<TrackNew[h][i]<<" , ";
+	 	// cout<<endl ;
 	 }
 	 cout<<endl ;
 
@@ -1091,10 +1123,15 @@ pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][num
  			}
 
  		}
- 		//cout<<endl<<"Sum : "<<centroid.first<<" , connectedPoints : "<<connectedPoints;
+ 		cout<<endl<<"Sum : "<<centroid.first<<" , connectedPoints : "<<connectedPoints;
  		float temp = (float)(centroid.first)/(float)(connectedPoints) ;
  		//cout<<" "<<temp ;
- 		centroid.first  = round(temp) ;
+
+ 		// Changed the definition of round 
+ 		if((temp - (int)temp ) > 0.5 )
+ 			centroid.first = (int)temp + 1 ;
+ 		else 
+ 			centroid.first = (int)temp ;
  	    //cout<<" centroid Point : "<<centroid.first ;
  		centroid.second = centroid.second / connectedPoints ;
  		return centroid;

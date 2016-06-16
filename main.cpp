@@ -23,7 +23,7 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/contrib/contrib.hpp"
 #include "math.h"
-#include <ctime>
+#include <ctime>                                       
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -39,18 +39,18 @@ using namespace std;
 // Definition of STL : Deque (with iteration)
 /********************************************/
 
-template<typename T, typename Container=std::deque<T> >
-class iterable_queue : public std::queue<T,Container>
-{
-public:
-    typedef typename Container::iterator iterator;
-    typedef typename Container::const_iterator const_iterator;
+// template<typename T, typename Container=std::deque<T> >
+// class iterable_queue : public std::queue<T,Container>
+// {
+// public:
+//     typedef typename Container::iterator iterator;
+//     typedef typename Container::const_iterator const_iterator;
 
-    iterator begin() { return this->c.begin(); }
-    iterator end() { return this->c.end(); }
-    const_iterator begin() const { return this->c.begin(); }
-    const_iterator end() const { return this->c.end(); }
-};
+//     iterator begin() { return this->c.begin(); }
+//     iterator end() { return this->c.end(); }
+//     const_iterator begin() const { return this->c.begin(); }
+//     const_iterator end() const { return this->c.end(); }
+// };
 
 const int numDivision = 4;
 const int virticalNumOfDivisions =3;
@@ -86,7 +86,8 @@ bool wayToSort(int i , int j){ return i > j ;}
 // Global variables
 /******************/                
 
-iterable_queue< pair< int , int > > Track[numLanes] ;
+// iterable_queue< pair< int , int > > Track[numLanes] ;
+vector < pair < int , int > > Track[numLanes] ;
 map< pair<int , int> , pair<int , int> > LaneMap , subLaneMap ; 
 map< int , pair< int , int > > VehicleMap ;
 static map< int , vector<int> > Position ;
@@ -416,7 +417,7 @@ int main()
         for(h = 0 ; h < numLanes ; h++)
         {	
         	cout<<"Lane : "<<h<<" :: " ;
-        for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
+        for(std::vector< pair<int , int > >::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {
            cout<<(*it).first<<"--->"<<(*it).second<<"("<<LaneMap[make_pair(h,(*it).second)].first<<","<<LaneMap[make_pair(h,(*it).second)].second<<")"<<" : ";
            sprintf(text1[c], "V%d", (int)((*it).first));
@@ -804,7 +805,7 @@ void Vehicle_Counter( int frame_counter)
 					while(isLaneColored[1][h][i-k])
 						k++ ;
 					Vehicle_counter++ ;
-					Track[h].push(make_pair(Vehicle_counter,i - k + 1)) ;
+					Track[h].push_back(make_pair(Vehicle_counter,i - k + 1)) ;
 					Position[Vehicle_counter].push_back(i-k+1) ;
 					lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
 
@@ -828,10 +829,10 @@ void Vehicle_Counter( int frame_counter)
 						if(isLaneColored[0][h][i-1]==0){
 							if(!((isLaneColored[1][h][i+1])|(isLaneColored[1][h][i-1]))){
 								// Constraint on new generation of vehicle
-								std::deque< pair<int , int > > ::iterator it=Track[h].begin() ;
+								std::vector< pair<int , int > >::iterator it=Track[h].begin() ;
 								if(Track[h].empty()/*not for Lane change*/){
 									Vehicle_counter++ ; 
-									Track[h].push(make_pair(Vehicle_counter,i)) ;
+									Track[h].push_back(make_pair(Vehicle_counter,i)) ;
 									Position[Vehicle_counter].push_back(i) ;
 									lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
 									//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
@@ -844,7 +845,7 @@ void Vehicle_Counter( int frame_counter)
 											if( (i < (*it).second)&&(i < realNumDivision[h]*virticalNumOfDivisions - 3 /*not for Lane change*/)/* Add condiiton for lane change also */)
 											{
 												Vehicle_counter++ ; 
-												Track[h].push(make_pair(Vehicle_counter,i)) ;
+												Track[h].push_back(make_pair(Vehicle_counter,i)) ;
 												Position[Vehicle_counter].push_back(i) ;
 												lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
 												//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
@@ -862,7 +863,7 @@ void Vehicle_Counter( int frame_counter)
 					else{
 						if(!(isLaneColored[0][h][i+1])){
 							Vehicle_counter++ ;
-							Track[h].push(make_pair(Vehicle_counter,i)) ;
+							Track[h].push_back(make_pair(Vehicle_counter,i)) ;
 							Position[Vehicle_counter].push_back(i) ;
 						    lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
 						    //cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
@@ -891,7 +892,7 @@ void Vehicle_Remove()
 			if(!Track[h].empty())	
 			{	
 				cout<<"Vehicle : "<<Track[h].front().first<<"  popped"<<endl;
-				Track[h].pop() ;
+				Track[h].erase(Track[h].begin()) ;
 				continue ;
 			}
 
@@ -903,7 +904,7 @@ void Vehicle_Remove()
 		   if((Position[vID].size() > 2) && Position[vID][topIndex]==-1 && Position[vID][topIndex-1]==-1 && Position[vID][topIndex-2]==-1 )
 		   {
 		   		cout<<"Vehicle : "<<Track[h].front().first<<"  popped"<<endl;
-		   		Track[h].pop();
+		   		Track[h].erase(Track[h].begin()) ;
 		   }	
 
 		}
@@ -963,7 +964,7 @@ void Vehicle_Localize()
  			}
  			else
  			{
- 				if((h<numLanes-1) && (isGridColored[1][3*h+2][i]) && (isGridColored[1][3*(h+1)][i]))
+ 				if((h<numLanes-1) && (isGridColored[1][3*h+2][i]) && (isGridColored[1][3*(h+1)][i]) && (!isGridColored[1][3*(h+1)+1][i]))
  				{
  					centroidPoints = calculateCentroid(3*h+2,i,isVisited) ;
  					if((i>0 && !isLaneColored[1][h][i-1])|(i==0))
@@ -1006,7 +1007,7 @@ void Vehicle_Localize()
         	else 
         		numVehicles++ ;
         
-        for(std::deque< pair<int , int > > ::iterator it=Track[h].begin(); it!=Track[h].end();++it)
+        for(std::vector< pair<int , int > >::iterator it=Track[h].begin(); it!=Track[h].end();++it)
         {	
 			
 			if(numVehicles == Track[h].size())
@@ -1092,6 +1093,7 @@ pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][num
  		while((doubtPoints.size()!=0))
  		{
  			point = doubtPoints.front() ;
+ 			cout<<" ( "<<point.first<<" , "<<point.second<<" ) , ";
  			isVisited[point.first][point.second] = 1 ;
  			doubtPoints.pop();
  			for(int i = -1 ; i <= 1 ; i++ )

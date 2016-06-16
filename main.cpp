@@ -79,7 +79,7 @@ void Vehicle_Tracker(int frame_counter);
 
 int round(float a);
 pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions]) ;
-
+pair<int , int> calculateCentroid_new(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions]) ;
 bool wayToSort(int i , int j){ return i > j ;}
 
 /******************/
@@ -365,8 +365,8 @@ int main()
 			}
 		}
 
-		future = img ; 
-		imshow("Future image",future);
+		//future = img ; 
+		//imshow("Future image",future);
 
 		/*********************************************/
 		// Vehicle counting and tracking  
@@ -419,22 +419,22 @@ int main()
 
 		// for(int i = 1 ; i <= Vehicle_counter ; i++ )
 		// 	cout<<"Vehicle # "<<i<<" # is at Lane : "<<VehicleMap[i].first<<" and at index : "<<VehicleMap[i].second<<endl;
-        cout<<endl;
-        for(h = 0 ; h < numLanes ; h++)
-        {	
-        	cout<<"Lane : "<<h<<" :: " ;
-        for(std::vector< pair<int , int > >::iterator it=Track[h].begin(); it!=Track[h].end();++it)
-        {
-           cout<<(*it).first<<"--->"<<(*it).second<<"("<<LaneMap[make_pair(h,(*it).second)].first<<","<<LaneMap[make_pair(h,(*it).second)].second<<")"<<" : ";
-           sprintf(text1[c], "V%d", (int)((*it).first));
-           putText(img, text1[c], cvPoint(LaneMap[make_pair(h,(*it).second)].first,LaneMap[make_pair(h,(*it).second)].second), 
-          FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
+        // cout<<endl;
+        // for(h = 0 ; h < numLanes ; h++)
+        // {	
+        // 	cout<<"Lane : "<<h<<" :: " ;
+        // for(std::vector< pair<int , int > >::iterator it=Track[h].begin(); it!=Track[h].end();++it)
+        // {
+        //    cout<<(*it).first<<"--->"<<(*it).second<<"("<<LaneMap[make_pair(h,(*it).second)].first<<","<<LaneMap[make_pair(h,(*it).second)].second<<")"<<" : ";
+        //    sprintf(text1[c], "V%d", (int)((*it).first));
+        //    putText(img, text1[c], cvPoint(LaneMap[make_pair(h,(*it).second)].first,LaneMap[make_pair(h,(*it).second)].second), 
+        //   FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0,0,250), 1, CV_AA);
 
-          c++ ;
-        }
-        cout<<endl ;
+        //   c++ ;
+        // }
+        // cout<<endl ;
         
-        }
+        // }
 
 
 
@@ -442,7 +442,7 @@ int main()
 		 Mat colorframe ;
 		 out_capture.write(colorframe);
 		 cout<<endl<<endl<<"*********************************"<<endl ;
-		 //if(frame_counter > 500) 
+		 if(frame_counter > 1200) 
 		 	waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
@@ -938,75 +938,98 @@ void Vehicle_Localize()
  	pair<int , int> centroidPoints ;
  	int counter ;
  	cout<<"Printing distance matrix"<<endl ;
- 	for(h=0;h<numLanes;h++)
- 	{	
- 		counter = 0 ;
- 		i = 0 ;
- 		while(i<realNumDivision[h]*virticalNumOfDivisions)
- 		{ 
- 			if(isLaneColored[1][h][i])
- 		 	{
- 				if(isGridColored[1][3*h+1][i])
- 				{	
- 					centroidPoints = calculateCentroid(3*h+1,i,isVisited) ;
- 					pair<int , int > Imagepoints = subLaneMap[make_pair(centroidPoints.first,centroidPoints.second)];
- 					if((i>0 && !isLaneColored[1][h][i-1])|(i==0))
- 					{
- 						for(int x = -2 ; x < 2 ; x++)
-							for(int y = -2 ; y < 2 ; y++)
-								img.at<Vec3b>(Point(Imagepoints.first + x ,Imagepoints.second + y )) = (0,0,255) ;
- 						//cout<<endl<<"Centroid is ("<<centroidPoints.first<<","<<centroidPoints.second<<")"<<endl;
- 						if(h==centroidPoints.first/3)
- 						{
- 							TrackNew[h][counter] = centroidPoints.second ;
- 							counter++ ;
- 						}
- 						else
- 						{
- 							cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > at index : "<<centroidPoints.second<<endl ;
- 							waitKey();
- 						}
- 							
-
- 					}
+ 	 
+ 	for(h=0 ; h < 3*numLanes ; h++)
+ 	{	i = 0 ;
+ 		while( i < realNumDivision[h/3]*virticalNumOfDivisions)
+ 		{
+ 			if(((h == 3*numLanes -1)&&isLaneColored[1][h][i] )|(isGridColored[1][h][i]&&isGridColored[1][h+1][i]))
+ 			{
+ 				if(!isVisited[h][i])
+ 				{   
+ 					
+ 					centroidPoints = calculateCentroid_new(h , i, isVisited) ;
+ 					pair<int , int > Imagepoints = subLaneMap[make_pair(centroidPoints.first , centroidPoints.second)] ;
+ 					cout<<endl<<"Centroid Points are :: "<<centroidPoints.first<<" , "<<centroidPoints.second<<endl; ;
+ 					for(int x = - 2 ; x < 2 ; x++)
+ 						for(int y = -2 ; y < 2 ; y++)
+ 							img.at<Vec3b>(Point(Imagepoints.first + x , Imagepoints.second + y)) = (0,0,255) ; 
+ 					continue ;
  				}
  			}
- 			else
- 			{
- 				// if((h<numLanes-1) && (isGridColored[1][3*h+2][i]) && (isGridColored[1][3*(h+1)][i]) && (!isGridColored[1][3*(h+1)+1][i]))
- 				// {
- 				// 	centroidPoints = calculateCentroid(3*h+2,i,isVisited) ;
- 				// 	if((i>0 && !isLaneColored[1][h][i-1])|(i==0))
- 				// 	{
- 				// 		//cout<<endl<<"Centroid is ("<<centroidPoints.first<<","<<centroidPoints.second<<")"<<endl;
- 				// 		if(h==centroidPoints.first/3)
- 				// 		{
- 				// 			TrackNew[h][counter] = centroidPoints.second ;
- 				// 			counter++ ;
- 				// 		}
- 				// 		else
- 				// 		{
- 				// 			cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > "<<endl ;
- 				// 			cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > at index : "<<centroidPoints.second<<endl ;
- 				// 			waitKey() ;
- 				// 		}
+ 			i++ ;
+ 		}
+ 	}
+
+ 	// for(h=0;h<numLanes;h++)
+ 	// {	
+ 	// 	counter = 0 ;
+ 	// 	i = 0 ;
+ 	// 	while(i<realNumDivision[h]*virticalNumOfDivisions)
+ 	// 	{ 
+ 	// 		if(isLaneColored[1][h][i])
+ 	// 	 	{
+ 	// 			if(isGridColored[1][3*h+1][i])
+ 	// 			{	
+ 	// 				centroidPoints = calculateCentroid(3*h+1,i,isVisited) ;
+ 	// 				pair<int , int > Imagepoints = subLaneMap[make_pair(centroidPoints.first,centroidPoints.second)];
+ 	// 				if((i>0 && !isLaneColored[1][h][i-1])|(i==0))
+ 	// 				{
+ 	// 					for(int x = -2 ; x < 2 ; x++)
+		// 					for(int y = -2 ; y < 2 ; y++)
+		// 						img.at<Vec3b>(Point(Imagepoints.first + x ,Imagepoints.second + y )) = (0,0,255) ;
+ 	// 					//cout<<endl<<"Centroid is ("<<centroidPoints.first<<","<<centroidPoints.second<<")"<<endl;
+ 	// 					if(h==centroidPoints.first/3)
+ 	// 					{
+ 	// 						TrackNew[h][counter] = centroidPoints.second ;
+ 	// 						counter++ ;
+ 	// 					}
+ 	// 					else
+ 	// 					{
+ 	// 						cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > at index : "<<centroidPoints.second<<endl ;
+ 	// 						waitKey();
+ 	// 					}
  							
 
- 				// 	}
- 				// }
+ 	// 				}
+ 	// 			}
+ 	// 		}
+ 	// 		else
+ 	// 		{
+ 	// 			// if((h<numLanes-1) && (isGridColored[1][3*h+2][i]) && (isGridColored[1][3*(h+1)][i]) && (!isGridColored[1][3*(h+1)+1][i]))
+ 	// 			// {
+ 	// 			// 	centroidPoints = calculateCentroid(3*h+2,i,isVisited) ;
+ 	// 			// 	if((i>0 && !isLaneColored[1][h][i-1])|(i==0))
+ 	// 			// 	{
+ 	// 			// 		//cout<<endl<<"Centroid is ("<<centroidPoints.first<<","<<centroidPoints.second<<")"<<endl;
+ 	// 			// 		if(h==centroidPoints.first/3)
+ 	// 			// 		{
+ 	// 			// 			TrackNew[h][counter] = centroidPoints.second ;
+ 	// 			// 			counter++ ;
+ 	// 			// 		}
+ 	// 			// 		else
+ 	// 			// 		{
+ 	// 			// 			cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > "<<endl ;
+ 	// 			// 			cout<<"Lane change detected from < "<<h<<" > to < "<<centroidPoints.first/3<<" > at index : "<<centroidPoints.second<<endl ;
+ 	// 			// 			waitKey() ;
+ 	// 			// 		}
+ 							
 
- 			}
- 			i++;
+ 	// 			// 	}
+ 	// 			// }
 
-	 	}
-	 	sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions , wayToSort);
+ 	// 		}
+ 	// 		i++;
 
-	 	// for( i = 0 ; i < 2*virticalNumOfDivisions ; i++ )
-	 	// 	cout<<TrackNew[h][i]<<" , ";
-	 	// cout<<endl ;
-	 }
-	 cout<<endl ;
+	 // 	}
+	 // 	sort(TrackNew[h],TrackNew[h] + 2*virticalNumOfDivisions , wayToSort);
 
+	 // 	// for( i = 0 ; i < 2*virticalNumOfDivisions ; i++ )
+	 // 	// 	cout<<TrackNew[h][i]<<" , ";
+	 // 	// cout<<endl ;
+	 // }
+	 // cout<<endl ;
+ 	cout<<"Entering the another checkpoint"<<endl ;
     for(h = 0 ; h < numLanes ; h++)
     {	
     	counter = 0 ; 
@@ -1091,6 +1114,67 @@ void Vehicle_Tracker(int frame_counter)
 	}
 }
 
+pair<int , int> calculateCentroid_new(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions])
+{	
+
+ 		int max_index = index ;
+ 		queue< pair< int , int > > doubtPoints ;
+ 		pair<int , int> centroid = make_pair(0,0) ;
+ 		pair <int , int > point , searchPoint ;
+ 		doubtPoints.push(make_pair(sublane,index)) ;
+ 		centroid = make_pair(sublane,index) ;
+ 		int connectedPoints = 1 ;
+ 		while((doubtPoints.size()!=0))
+ 		{
+ 			point = doubtPoints.front() ;
+ 			cout<<" ( "<<point.first<<" , "<<point.second<<" ) , ";
+ 			isVisited[point.first][point.second] = 1 ;
+ 			doubtPoints.pop();
+ 			for(int i = -1 ; i <= 1 ; i++ )
+ 			{
+ 				for(int j = -1 ; j <=1  ; j++)
+ 				{
+ 					searchPoint = make_pair(point.first+i,point.second+j);
+ 					if((i*j == 0)&&(searchPoint.first >=0 && searchPoint.first < 3*numLanes)&&(searchPoint.second >=0 && searchPoint.second < realNumDivision[sublane/3]*virticalNumOfDivisions))
+ 					{
+ 						if((!isVisited[searchPoint.first][searchPoint.second])&&(isGridColored[1][searchPoint.first][searchPoint.second]))
+ 						{
+ 							// if((searchPoint.first/3 == sublane/3)&&(!isLaneColored[1][searchPoint.first/3][searchPoint.second]))
+ 							// 	;//"Vertical shift assumption"<<endl ;
+ 							// else
+ 							if(abs(searchPoint.first - sublane)>2)
+ 							 		; // cout<<"Lateral shift assumption"
+ 							else
+ 								{
+ 									doubtPoints.push(searchPoint) ;
+ 									isVisited[searchPoint.first][searchPoint.second] = 1 ;
+ 									centroid.first = centroid.first + searchPoint.first ;
+ 									centroid.second = centroid.second + searchPoint.second ;
+ 									if(searchPoint.second > max_index)
+ 										max_index = searchPoint.second ;
+ 									//cout<<"( "<<searchPoint.first<<" , "<<searchPoint.second<<" ) , " ;
+ 									connectedPoints++ ;
+ 								}
+ 						}
+ 					}
+ 				}
+ 			}
+
+ 		}
+ 		//cout<<endl<<"Sum 1 : "<<centroid.first<<"Sum 2 : "<<centroid.second<<" , connectedPoints : "<<connectedPoints;
+ 		float temp = (float)(centroid.first)/(float)(connectedPoints) ;
+ 		//cout<<" "<<temp ;
+
+ 		// Changed the definition of round 
+ 		if((temp - (int)temp ) > 0.5 )
+ 			centroid.first = (int)temp + 1 ;
+ 		else 
+ 			centroid.first = (int)temp ;
+ 	    //cout<<" centroid Point : "<<centroid.first ;
+ 		centroid.second = round((float)centroid.second / connectedPoints) ;
+ 		index = max_index + 3 ;
+ 		return centroid;
+}
 pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions])
 {	
 

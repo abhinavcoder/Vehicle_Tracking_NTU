@@ -92,7 +92,7 @@ map< pair<int , int> , pair<int , int> > LaneMap , subLaneMap ;
 map< int , pair< int , int > > VehicleMap ;
 static map< int , vector<int> > Position ;
 map< int , pair< bool , pair< int , int > > > lanechangeMap ;
-vector< < pair < int , int > > > patchCentroid[numLanes];
+vector< pair < int , int > > patchCentroid[numLanes];
 //vector< pair < pair < int,int > , pair < int , int > > > centroidPos[2][numLanes] ;
 
 Mat img,frame,background , future ;
@@ -1066,6 +1066,13 @@ void Vehicle_Localize(int frame_counter)
 	 // 	// cout<<endl ;
 	 // }
 	 // cout<<endl ;
+
+ 	//************** To be changed *******************
+ 	for( h = 0 ; h < numLanes ; h++)
+ 	{
+ 		if(Track[h].size() == patchCentroid[h].size())
+ 	}
+ 	//*************** Earlier code ***************************************************************************
     for(h = 0 ; h < numLanes ; h++)
     {	
     	counter = 0 ; 

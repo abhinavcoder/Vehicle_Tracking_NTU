@@ -92,7 +92,8 @@ map< pair<int , int> , pair<int , int> > LaneMap , subLaneMap ;
 map< int , pair< int , int > > VehicleMap ;
 static map< int , vector<int> > Position ;
 map< int , pair< bool , pair< int , int > > > lanechangeMap ;
-vector< pair < pair < int,int > , pair < int , int > > > centroidPos[2][numLanes] ;
+vector< < pair < int , int > > > patchCentroid[numLanes];
+//vector< pair < pair < int,int > , pair < int , int > > > centroidPos[2][numLanes] ;
 
 Mat img,frame,background , future ;
 Size s=Size(320,240);
@@ -950,8 +951,11 @@ void Vehicle_Localize(int frame_counter)
  				{   
  					
  					centroidPoints = calculateCentroid_new(h , i, isVisited) ;
- 					//pair<int , int > Imagepoints = subLaneMap[make_pair(centroidPoints.first , centroidPoints.second)] ;
- 					//cout<<endl<<"Centroid Points are :: "<<centroidPoints.first<<" , "<<centroidPoints.second<<endl; 
+ 					patchCentroid[centroidPoints.first/3].insert(patchCentroid[centroidPoints.first/3].begin() , centroidPoints) ;
+ 					pair<int , int > Imagepoints = subLaneMap[make_pair(centroidPoints.first , centroidPoints.second)] ;
+ 					for(int x = - 2 ; x < 2 ; x++)
+ 						for(int y = -2 ; y < 2 ; y++)
+ 							img.at<Vec3b>(Point(Imagepoints.first + x , Imagepoints.second + y)) = (0,0,255) ;
  					continue ;
  				}
  			}
@@ -959,51 +963,39 @@ void Vehicle_Localize(int frame_counter)
  		}
  	}
 
- 	if(frame_counter!=1)
- 	{
- 		for(h = 0 ; h < numLanes ; h++)
- 		{
- 			for(std::vector< pair< pair<int ,int> , pair< int , int > > >::iterator it=centroidPos[1][h].begin(); it!=centroidPos[1][h].end();++it)
- 			{
- 				pair<int , int > max_min_pair = (*it).second ;
- 				pair<int , int > centroid_point = (*it).first ;
 
- 				cout<<"Centroid Points are :: "<<(*it).first.first<<" , "<<(*it).first.second<<endl ;
+ 	// if(frame_counter!=1)
+ 	// {
+ 	// 	for(h = 0 ; h < numLanes ; h++)
+ 	// 	{
+ 	// 		for(std::vector< pair< pair<int ,int> , pair< int , int > > >::iterator it=centroidPos[1][h].begin(); it!=centroidPos[1][h].end();++it)
+ 	// 		{
+ 	// 			pair<int , int > max_min_pair = (*it).second ;
+ 	// 			pair<int , int > centroid_point = (*it).first ;
 
- 				float ratio = (float)centroid_point.second /(realNumDivision[h]*virticalNumOfDivisions*0.5) ;
- 				if(((ratio >= 1)&&((max_min_pair.first - max_min_pair.second) > 3))|((ratio < 1)&&((max_min_pair.first - max_min_pair.second) > 4)))
- 				{   cout<<"Entering the splitting condiiton"<<endl ;
- 					// Assuming no Lane change 
- 					if(centroidPos[0][h].size() > centroidPos[1][h].size())
- 					{
- 						int min1 = max_min_pair.second , max2 = max_min_pair.first ;
- 						int max1 = min1 + (max2 - min1)/2 ;
- 						int min2 = max1 ;
- 						(*it).first.second =  ( min1 + max1 )/2 ;
- 						(*it).second.first = max1 ; 
- 						(*it).second.second = min1 ; 
- 						centroidPos[1][h].insert((it),make_pair(make_pair(centroid_point.first , (min2 + max2)/2 ) , make_pair(max2 , min2))) ;
- 						++it ;
- 					}
- 				} 
- 				// if(((*it).first > realNumDivision[h]*virticalNumOfDivisions/2)&&((max_min_pair.first - max_min_pair.second) > 3))|(((*it).first < realNumDivision[h]*virticalNumOfDivisions/2)&&))
- 			}
- 		}
- 	}
+ 	// 			cout<<"Centroid Points are :: "<<(*it).first.first<<" , "<<(*it).first.second<<endl ;
+
+ 	// 			float ratio = (float)centroid_point.second /(realNumDivision[h]*virticalNumOfDivisions*0.5) ;
+ 	// 			if(((ratio >= 1)&&((max_min_pair.first - max_min_pair.second) > 3))|((ratio < 1)&&((max_min_pair.first - max_min_pair.second) > 4)))
+ 	// 			{   cout<<"Entering the splitting condiiton"<<endl ;
+ 	// 				// Assuming no Lane change 
+ 	// 				if(centroidPos[0][h].size() > centroidPos[1][h].size())
+ 	// 				{
+ 	// 					int min1 = max_min_pair.second , max2 = max_min_pair.first ;
+ 	// 					int max1 = min1 + (max2 - min1)/2 ;
+ 	// 					int min2 = max1 ;
+ 	// 					(*it).first.second =  ( min1 + max1 )/2 ;
+ 	// 					(*it).second.first = max1 ; 
+ 	// 					(*it).second.second = min1 ; 
+ 	// 					centroidPos[1][h].insert((it),make_pair(make_pair(centroid_point.first , (min2 + max2)/2 ) , make_pair(max2 , min2))) ;
+ 	// 					++it ;
+ 	// 				}
+ 	// 			} 
+ 	// 			// if(((*it).first > realNumDivision[h]*virticalNumOfDivisions/2)&&((max_min_pair.first - max_min_pair.second) > 3))|(((*it).first < realNumDivision[h]*virticalNumOfDivisions/2)&&))
+ 	// 		}
+ 	// 	}
+ 	// }
  	
-
-	for(h = 0 ; h < numLanes ; h++)
- 	{
- 		for(std::vector< pair< pair<int ,int> , pair< int , int > > >::iterator it=centroidPos[1][h].begin(); it!=centroidPos[1][h].end();++it)
- 		{
- 			pair<int , int > Imagepoints = subLaneMap[make_pair((*it).first.first , (*it).first.second)] ;
- 			for(int x = - 2 ; x < 2 ; x++)
- 				for(int y = -2 ; y < 2 ; y++)
- 					img.at<Vec3b>(Point(Imagepoints.first + x , Imagepoints.second + y)) = (0,0,255) ;
- 		}
- 		 	centroidPos[0][h] = centroidPos[1][h] ;
- 			centroidPos[1][h].clear() ;
- 	}
 
 
  	// for(h=0;h<numLanes;h++)
@@ -1169,7 +1161,7 @@ pair<int , int> calculateCentroid_new(int sublane , int &index , int isVisited[]
  		centroid = make_pair(sublane,index) ;
  		int connectedPoints = 1 ;
  		while((doubtPoints.size()!=0))
- 		{
+ 		{ 
  			point = doubtPoints.front() ;
  			//cout<<" ( "<<point.first<<" , "<<point.second<<" ) , ";
  			isVisited[point.first][point.second] = 1 ;
@@ -1219,7 +1211,6 @@ pair<int , int> calculateCentroid_new(int sublane , int &index , int isVisited[]
  	    //cout<<" centroid Point : "<<centroid.first ;
  		centroid.second = round((float)centroid.second / connectedPoints) ;
  		index = max_index + 3 ;
- 		centroidPos[1][centroid.first/3].insert(centroidPos[1][centroid.first/3].begin() , make_pair( make_pair(centroid.first , centroid.second) , make_pair(max_index,min_index))) ;
  		return centroid;
 }
 pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions])

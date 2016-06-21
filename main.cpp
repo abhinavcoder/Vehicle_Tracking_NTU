@@ -445,7 +445,7 @@ int main()
 		 Mat colorframe ;
 		 out_capture.write(colorframe);
 		 cout<<endl<<endl<<"*********************************"<<endl ;
-		 if(frame_counter > 1000) 
+		 if(frame_counter > 790) 
 		 	waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
@@ -1140,7 +1140,7 @@ void Vehicle_Localize(int frame_counter)
  				//Case 2 : No detection of earlier detected vehicle
  				//Case 3 : Normal mapping
  				/**************************************************/
- 				vector<pair<int , int > >::iterator it , vehicle = Track[h].begin();
+ 				vector<pair<int , int> >::iterator it , v_it , patch = patchCentroid[h].begin() ;
  				if(patchCentroid[h].size()==0)
  				{
  					for(it=Track[h].begin(); it!=Track[h].end();++it)
@@ -1149,52 +1149,97 @@ void Vehicle_Localize(int frame_counter)
  					}
  					continue ;
  				}
- 				for(std::vector<pair<int , int > >::iterator patch = patchCentroid[h].begin() ; patch!= patchCentroid[h].end() ; ++patch)
+
+ 				for(std::vector<pair<int , int > >::iterator vehicle = Track[h].begin() ; vehicle!= Track[h].end() ; ++vehicle)
  				{
- 					int index = (*patch).second ;
- 					while(vehicle!= Track[h].end())
+ 					int index = (*patch).second ; 
+ 					if((*vehicle).second > index)
  					{
- 						if((*vehicle).second > index)
+ 						it = vehicle + 1 ;
+ 						if(it!=Track[h].end())
  						{
- 							it = vehicle + 1 ;
- 							if(it!=Track[h].end())
+ 							int nextDist = abs((*vehicle).second - (*it).second) ;
+ 							//int prevDist = abs((*vehicle).second - ())
+ 							if(nextDist < 4) // 4 : occlusion step
  							{
- 								if(abs((*vehicle).second - (*it).second) < 4)  // 4 : occlusion step
+ 								//Case 1 
+ 								if(vehicle!=Track[h].begin())
  								{
- 									// Case 1 
- 									(*vehicle).second = (*it).second = (*patch).second ;
- 									Position[(*vehicle).first].push_back((*vehicle).second) ;
- 									Position[(*it).first].push_back((*it).second) ;
- 									vehicle = vehicle + 2 ;
- 									break ;
+ 									v_it = vehicle - 1 ; 
+ 									int prevDist = abs((*vehicle).second - (*v_it).second) ;
+ 									if(prevDist < nextDist)
+ 									{
+ 										(*vehicle).second = (*v_it).second ;
+ 										Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 									}
+ 									else
+ 									{
+ 										(*vehicle).second = (*it).second = (*patch).second ;
+ 										Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 										Position[(*it).first].push_back((*it).second) ;
+ 										vehicle++ ;
+ 										patch++ ;
+ 									}
  								}
  								else
  								{
- 									//Case 2
- 									//(*vehicle).second = -1 ; 
- 									Position[(*vehicle).first].push_back(-1) ;
- 									vehicle ++ ;
+ 									(*vehicle).second = (*it).second = (*patch).second ;
+ 									Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 									Position[(*it).first].push_back((*it).second) ;
+ 									vehicle++ ;
+ 									patch++ ;
  								}
+
  							}
  							else
  							{
- 								// Case 2
- 								//(*vehicle).second = -1 ; 
- 								Position[(*vehicle).first].push_back(-1) ;
- 								vehicle++ ;
+ 								// Case 2 
+ 								if(vehicle!=Track[h].begin())
+ 								{
+ 									v_it = vehicle - 1;
+ 									int prevDist = abs((*vehicle).second - (*v_it).second) ;
+ 									if(prevDist < 4)
+ 									{
+ 										(*vehicle).second = (*v_it).second ;
+ 										Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 									}
+ 									else
+ 										Position[(*vehicle).first].push_back(-1) ;
+
+ 								}
+ 								else
+									Position[(*vehicle).first].push_back(-1) ;
+ 								
  							}
  						}
  						else
  						{
- 							//Case 3
- 							(*vehicle).second = (*patch).second;
- 							Position[(*vehicle).first].push_back((*vehicle).second) ;
- 							vehicle++ ;
- 							break ;
-
+ 							// Case 2 
+ 							if(vehicle!=Track[h].begin())
+ 							{
+ 								v_it = vehicle - 1;
+ 								int prevDist = abs((*vehicle).second - (*v_it).second) ;
+ 								if(prevDist < 4)
+ 								{
+ 										(*vehicle).second = (*v_it).second ;
+ 										Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 								}
+ 								else
+ 										Position[(*vehicle).first].push_back(-1) ;
+ 							}
+ 							else
+									Position[(*vehicle).first].push_back(-1) ;
  						}
  					}
+ 					else
+ 					{
+ 						// Case 3
+ 						(*vehicle).second = (*patch).second ;
+ 						Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 						patch++ ;
+ 					}	
  				}
+ 				//***************************************************************************
  			}
  			else
  			{

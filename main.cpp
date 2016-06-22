@@ -135,8 +135,8 @@ float initialLines[2][3];
 /**************************/
 int main()
 {	
-    //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
-	VideoCapture cap("./Videos/M-30.avi") ;
+    VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
+	//VideoCapture cap("./Videos/M-30.avi") ;
 	//VideoCapture cap("./Videos/M-30_HD.avi") ;
 	double fps = cap.get(CV_CAP_PROP_FPS);
 	if(!cap.isOpened())  // if not success, exit program
@@ -190,8 +190,8 @@ int main()
 	if(choice)
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
-		// auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
-		 auto_input.open("./Input_Points/Input_Points_M-30.txt");
+		 auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
+		// auto_input.open("./Input_Points/Input_Points_M-30.txt");
 		//auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
 		string line ;
 		h = 0 ; 
@@ -948,7 +948,8 @@ void Vehicle_Remove()
 		{
 		   int vID = Track[h].front().first ;
 		   int topIndex = Position[vID].size() - 1 ;
-		   if((Position[vID].size() > 2) && Position[vID][topIndex]==-1 && Position[vID][topIndex-1]==-1 && Position[vID][topIndex-2]==-1 )
+		   // Popping out must occur after index 3 here defined 
+		   if((Track[h].front().second > 3)&&(Position[vID].size() > 2) && Position[vID][topIndex]==-1 && Position[vID][topIndex-1]==-1 && Position[vID][topIndex-2]==-1 )
 		   {
 		   		cout<<"Vehicle : "<<Track[h].front().first<<"  popped"<<endl;
 		   		Track[h].erase(Track[h].begin()) ;
@@ -1123,7 +1124,8 @@ void Vehicle_Localize(int frame_counter)
  			//*******************/
  			vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin() ;
  			for(std::vector< pair<int , int > >::iterator it=Track[h].begin(); it!=Track[h].end();++it)
- 			{
+ 			{	
+
  				(*it).second = (*patch).second ;
  				Position[(*it).first].push_back((*it).second) ;
  				patch++ ;
@@ -1140,7 +1142,7 @@ void Vehicle_Localize(int frame_counter)
  				//Case 2 : No detection of earlier detected vehicle
  				//Case 3 : Normal mapping
  				/**************************************************/
- 				vector<pair<int , int> >::iterator it , v_it , patch = patchCentroid[h].begin() ;
+ 				vector<pair<int , int> >::iterator it  , patch = patchCentroid[h].begin() ;
  				if(patchCentroid[h].size()==0)
  				{
  					for(it=Track[h].begin(); it!=Track[h].end();++it)
@@ -1153,6 +1155,10 @@ void Vehicle_Localize(int frame_counter)
  				for(std::vector<pair<int , int > >::iterator vehicle = Track[h].begin() ; vehicle!= Track[h].end() ; ++vehicle)
  				{
  					int index = (*patch).second ; 
+ 					int prevDist = 100 ; // set default high value
+ 					if(vehicle!=Track[h].begin())
+ 						prevDist = abs((*vehicle).second - (*(vehicle-1)).second) ;
+
  					if((*vehicle).second > index)
  					{
  						it = vehicle + 1 ;
@@ -1163,14 +1169,17 @@ void Vehicle_Localize(int frame_counter)
  							if(nextDist < 4) // 4 : occlusion step
  							{
  								//Case 1 
- 								if(vehicle!=Track[h].begin())
+ 								if(prevDist < nextDist)
  								{
- 									v_it = vehicle - 1 ; 
- 									int prevDist = abs((*vehicle).second - (*v_it).second) ;
- 									if(prevDist < nextDist)
+ 									(*vehicle).second = (*(vehicle-1)).second ;
+ 									Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 								}
+ 								else
+ 								{	
+ 									// To take care of too much shift in the position 
+ 									if(abs((*vehicle).second - (*patch).second) > 2) 
  									{
- 										(*vehicle).second = (*v_it).second ;
- 										Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 										Position[(*vehicle).first].push_back(-1) ;
  									}
  									else
  									{
@@ -1181,65 +1190,47 @@ void Vehicle_Localize(int frame_counter)
  										patch++ ;
  									}
  								}
- 								else
- 								{
- 									(*vehicle).second = (*it).second = (*patch).second ;
- 									Position[(*vehicle).first].push_back((*vehicle).second) ;
- 									Position[(*it).first].push_back((*it).second) ;
- 									vehicle++ ;
- 									patch++ ;
- 								}
-
- 							}
+ 							}								
  							else
  							{
  								// Case 2 
- 								if(vehicle!=Track[h].begin())
+ 								if(prevDist < 4)
  								{
- 									v_it = vehicle - 1;
- 									int prevDist = abs((*vehicle).second - (*v_it).second) ;
- 									if(prevDist < 4)
- 									{
- 										(*vehicle).second = (*v_it).second ;
- 										Position[(*vehicle).first].push_back((*vehicle).second) ;
- 									}
- 									else
- 										Position[(*vehicle).first].push_back(-1) ;
-
+ 									(*vehicle).second = (*(vehicle-1)).second ;
+ 									Position[(*vehicle).first].push_back((*vehicle).second) ;
  								}
  								else
-									Position[(*vehicle).first].push_back(-1) ;
- 								
+ 									Position[(*vehicle).first].push_back(-1) ;
+
  							}
  						}
  						else
  						{
  							// Case 2 
- 							if(vehicle!=Track[h].begin())
+ 							if(prevDist < 4)
  							{
- 								v_it = vehicle - 1;
- 								int prevDist = abs((*vehicle).second - (*v_it).second) ;
- 								if(prevDist < 4)
- 								{
- 										(*vehicle).second = (*v_it).second ;
- 										Position[(*vehicle).first].push_back((*vehicle).second) ;
- 								}
- 								else
- 										Position[(*vehicle).first].push_back(-1) ;
+ 								(*vehicle).second = (*(vehicle-1)).second ;
+ 								Position[(*vehicle).first].push_back((*vehicle).second) ;
  							}
  							else
-									Position[(*vehicle).first].push_back(-1) ;
+								Position[(*vehicle).first].push_back(-1) ;
+ 							
  						}
  					}
  					else
  					{
  						// Case 3
- 						(*vehicle).second = (*patch).second ;
- 						Position[(*vehicle).first].push_back((*vehicle).second) ;
- 						patch++ ;
+ 						// To take care of too much shift in the position 
+ 						if(abs((*vehicle).second - (*patch).second) > 2)
+ 							Position[(*vehicle).first].push_back(-1) ;
+ 						else
+ 						{
+ 							(*vehicle).second = (*patch).second ;
+ 							Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 							patch++ ;
+ 						}
  					}	
  				}
- 				//***************************************************************************
  			}
  			else
  			{
@@ -1364,7 +1355,7 @@ pair<int , int> calculateCentroid_new(int sublane , int &index , int isVisited[]
  					searchPoint = make_pair(point.first+i,point.second+j);
  					if((i*j == 0)&&(searchPoint.first >=0 && searchPoint.first < 3*numLanes)&&(searchPoint.second >=0 && searchPoint.second < realNumDivision[sublane/3]*virticalNumOfDivisions))
  					{
- 						if((!isVisited[searchPoint.first][searchPoint.second])&&(isGridColored[1][searchPoint.first][searchPoint.second]))
+ 						if((!isVisited[searchPoint.first][searchPoint.second])&&(isGridColored[1][searchPoint.first][searchPoint.second])/*&&(isLaneColored[1][searchPoint.first/3][searchPoint.second])*/)
  						{
  							// if((searchPoint.first/3 == sublane/3)&&(!isLaneColored[1][searchPoint.first/3][searchPoint.second]))
  							// 	;//"Vertical shift assumption"<<endl ;

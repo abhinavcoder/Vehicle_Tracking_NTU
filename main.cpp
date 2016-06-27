@@ -1009,121 +1009,124 @@ void Vehicle_Localize(int frame_counter)
  	cout<<"Entering for lane change detection"<<endl ;
  	//pair<int ,int > pt = patchCentroid[0].front();
  	//cout<<pt.first<<" , "<<pt.second<<endl ;
- 	bool laneChange , laneChangeright , laneChangeLeft ;
- 	for(h = 0 ; h < numLanes ; h++)
- 	{	
- 		cout<<"sfsgdgddg h"<<endl;
- 		for(std::vector< pair<int , int > >::iterator patch = patchCentroid[h].begin(); patch!=patchCentroid[h].end();++patch)
- 		{  	
- 			cout<<"Entering the loop";
- 			//cout<<" "<<(*patch).first<<"Internal";
- 		    //laneChange = true ; laneChangeLeft = true ; laneChangeright = true ;
- 			// Check 1 :: Checking in same Lane whether there's a previous vehicle or not
- 			//cout<<"Check 1";
+ 	bool laneChange , laneChangeR , laneChangeL ;
+ 	
+ 	for( h = 0 ; h < numLanes ; h++)
+ 	{
+ 		for(std::vector<pair<int , int > >::iterator patch = patchCentroid[h].begin() ; patch != patchCentroid[h].end() ; ++patch)
+ 		{	
+ 			laneChange = true ;
+ 			laneChangeL = laneChangeR = true ;
  			for(std::vector< pair<int , int> >::iterator vehicle = Track[h].begin() ; vehicle!=Track[h].end();++vehicle)
  			{
  				if(abs((*vehicle).second - (*patch).second) < 3)
  				{
  				 	laneChange = false ;
  				 	break ;
-
  				}
+
  			}
-
- 			pair<int , int> v1 , v2 ;
-
+ 			pair<int , int > v1 , v2 ;
+ 			bool isv1 = false , isv2 = false ;
  			if(laneChange)
  			{
- 				cout<<"Check 2";
- 				// Check 2  :: Check whether there was a vehicle in the side Lanes 
- 				if(h > 0)
- 				{	
- 					if(Track[h-1].size() == 0 )
- 						laneChangeLeft = false ;
-
- 					for(std::vector< pair<int , int> >::iterator vehicle = Track[h-1].begin() ; vehicle!=Track[h-1].end();++vehicle)
+ 				if(h>0)
+ 				{
+ 					if(Track[h-1].size() == 0)
+ 						laneChangeL = false ;
+ 					else
  					{
- 						if(((*patch).second >= (*vehicle).second)&&(((*patch).second -  (*vehicle).second) < 3))
+ 						for(std::vector< pair<int , int> >::iterator vehicle = Track[h-1].begin() ; vehicle!=Track[h-1].end();++vehicle)
  						{
- 							v1 = (*vehicle) ;
- 							laneChangeLeft = true ;
- 							break ;
+ 							if(((*patch).second >= (*vehicle).second)&&(((*patch).second -  (*vehicle).second) < 3))
+ 							{
+ 								v1 = (*vehicle) ;
+ 								isv1 = true ;
+ 								laneChangeL = true ;
+ 								break ; 								
+ 							}
+ 							else
+ 								laneChangeL = false ;
  						}
- 						else
- 						{
- 							laneChangeLeft = false ;
- 						}
+
  					}
- 				}
+				}
+
  				if(h < numLanes-1)
  				{	
  					if(Track[h+1].size() == 0)
- 						laneChangeright = false ;
-
-					for(std::vector< pair<int , int> >::iterator vehicle = Track[h+1].begin() ; vehicle!=Track[h+1].end();++vehicle)
+ 						laneChangeR = false ;
+ 					else
  					{
- 						if(((*patch).second >= (*vehicle).second)&&(((*patch).second -  (*vehicle).second) < 3))
+						for(std::vector< pair<int , int> >::iterator vehicle = Track[h+1].begin() ; vehicle!=Track[h+1].end();++vehicle)
  						{
- 							v2 = (*vehicle) ;
- 							laneChangeright = true ;
- 							break ;
- 						}
- 						else
- 						{
- 							laneChangeright = false ;
+ 							if(((*patch).second >= (*vehicle).second)&&(((*patch).second -  (*vehicle).second) < 3))
+ 							{
+ 								v2 = (*vehicle) ;
+ 								isv2 = true ;
+ 								laneChangeR = true ;
+ 								break ;
+ 							}
+ 							else
+ 								laneChangeR = false ;
  						}
  					}
- 				}
+				} 			
  			}
 
- 			if(laneChange&&(laneChangeLeft|laneChangeright))
+			if(laneChange&&(laneChangeL|laneChangeR))
  			{	
+ 				cout<<isv1<<" , "<<isv2<<endl ;
 
- 				// Check 3 :: If vehicle and current Patch are nearby 
- 				cout<<"Check 3";
- 				if(laneChangeLeft)
+				if(laneChangeL)
  				{
- 					for(std::vector< pair<int , int > >::iterator it = patchCentroid[h-1].begin(); it!=patchCentroid[h-1].end();++it)
+ 					if(h==0)
+ 						laneChangeL = false ; 
+ 					else
  					{
- 						if(abs(v1.second - (*patch).second) < 3)
+ 						for(std::vector< pair<int , int > >::iterator it = patchCentroid[h-1].begin(); it!=patchCentroid[h-1].end();++it)
  						{
- 							laneChangeLeft = false ; 
- 							break ;
+ 							if(abs(v1.second - (*patch).second) < 3)
+ 							{
+ 								laneChangeL = false ; 
+ 								break ;
+ 							}
  						}
  					}
  				}
- 				if(laneChangeright)
- 				{
-  					for(std::vector< pair<int , int > >::iterator it = patchCentroid[h+1].begin(); it!=patchCentroid[h+1].end();++it)
+
+ 				if(laneChangeR)
+ 				{	
+ 					if(h==numLanes-1)
+ 						laneChangeR = false ;
+ 					else
  					{
- 						if(abs(v2.second - (*patch).second) < 3)
+  						for(std::vector< pair<int , int > >::iterator it = patchCentroid[h+1].begin(); it!=patchCentroid[h+1].end();++it)
  						{
- 							laneChangeright = false ; 
- 							break ;
- 						}
- 					}					
+ 							if(abs(v2.second - (*patch).second) < 3)
+ 							{
+ 								laneChangeR = false ; 
+ 								break ;
+ 							}
+ 						}						
+ 					}
  				}
 
- 				if(laneChangeright)
+ 				if(laneChangeR)
  				{
  					cout<<"Lane changed of vehicle no. :: "<<v2.first<<" from : ("<<v2.second<<" --> "<<(*patch).second<<endl ;
  					waitKey() ;
  				}
- 				if(laneChangeLeft)
+ 				if(laneChangeL)
  				{
  					cout<<"Lane changed of vehicle no. :: "<<v1.first<<" from : ("<<v1.second<<" --> "<<(*patch).second<<endl ;
  			 		waitKey() ;
  			 	}
+ 			 	
  			}
 
- 			// Searching for neighbour lane distances
  		}
- 		
- 		cout<<"Hello world";
  	}
-
- 	//************************************************
-    cout<<"Hello world";
 
  	//************** To be changed ******************* 
  	for( h = 0 ; h < numLanes ; h++)

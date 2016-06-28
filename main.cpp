@@ -137,8 +137,8 @@ float initialLines[2][3];
 int main()
 {	
     //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
-	//VideoCapture cap("./Videos/M-30.avi") ;
-	VideoCapture cap("./Videos/M-30_HD.avi") ;
+	VideoCapture cap("./Videos/M-30.avi") ;
+	//VideoCapture cap("./Videos/M-30_HD.avi") ;
 	double fps = cap.get(CV_CAP_PROP_FPS);
 	if(!cap.isOpened())  // if not success, exit program
 	{
@@ -192,8 +192,8 @@ int main()
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
 		//auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
-		//auto_input.open("./Input_Points/Input_Points_M-30.txt");
-		auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
+		auto_input.open("./Input_Points/Input_Points_M-30.txt");
+		//auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -446,8 +446,8 @@ int main()
 		 Mat colorframe ;
 		 out_capture.write(img);
 		 cout<<endl<<endl<<"*********************************"<<endl ;
-		 // if(frame_counter > 790) 
-		 waitKey();
+		// if(frame_counter > 520) 
+		 //	waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -935,11 +935,11 @@ void Vehicle_Remove()
 	/********************************/
 	for(h = 0 ; h < numLanes ; h++)
 	{
-		i = realNumDivision[h]*virticalNumOfDivisions - 2 ;
-		if((!isLaneColored[1][h][i+1])&&(isLaneColored[0][h][i+1]))
+		i = realNumDivision[h]*virticalNumOfDivisions - 1;
+		if((!isLaneColored[1][h][i])&&(!isLaneColored[1][h][i-1])&&(isLaneColored[0][h][i]))
 			if(!Track[h].empty())	
 			{	
-				cout<<"Vehicle : "<<Track[h].front().first<<"  popped"<<endl;
+				cout<<"Vehicle : "<<Track[h].front().first<<"  popped due to reaching end"<<endl;
 				Track[h].erase(Track[h].begin()) ;
 				continue ;
 			}
@@ -952,7 +952,7 @@ void Vehicle_Remove()
 		   // Popping out must occur after index 3 here defined 
 		   if((Track[h].front().second > 3)&&(Position[vID].size() > 2) && Position[vID][topIndex]==-1 && Position[vID][topIndex-1]==-1 && Position[vID][topIndex-2]==-1 )
 		   {
-		   		cout<<"Vehicle : "<<Track[h].front().first<<"  popped"<<endl;
+		   		cout<<"Vehicle : "<<Track[h].front().first<<"  popped due to simmultaneous non detection"<<endl;
 		   		Track[h].erase(Track[h].begin()) ;
 		   }	
 
@@ -973,6 +973,9 @@ void Lane_Change()
  		{	
  			laneChange = true ;
  			laneChangeL = laneChangeR = true ;
+ 			if((*patch).second == realNumDivision[h]*virticalNumOfDivisions - 1)
+ 				continue ;
+
  			for(std::vector< pair<int , int> >::iterator vehicle = Track[h].begin() ; vehicle!=Track[h].end();++vehicle)
  			{
  				if(abs((*vehicle).second - (*patch).second) < 3)
@@ -1094,8 +1097,8 @@ void Lane_Change()
 							if(it == Track[h].end() -1 ) 
  								Track[h].push_back(make_pair(v2.first,(*patch).second)) ;
  						}
- 						//waitKey() ;
  					}
+ 					waitKey() ;
  				}
 
  				if(laneChangeL)
@@ -1124,8 +1127,9 @@ void Lane_Change()
  							if(it == Track[h].end()-1 ) 
  								Track[h].push_back(make_pair(v1.first,(*patch).second)) ;
  						}
- 						//waitKey() ;
- 					}
+ 				
+ 			 		}
+ 			 		waitKey() ;
  			 	}
  			 	
  			}

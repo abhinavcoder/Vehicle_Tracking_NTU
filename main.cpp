@@ -139,7 +139,7 @@ int main()
 {	
     //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
 	//VideoCapture cap("./Videos/M-30.avi") ;
-	  VideoCapture cap("./Videos/M-30_HD.avi") ;
+	 VideoCapture cap("./Videos/M-30_HD.avi") ;
 	double fps = cap.get(CV_CAP_PROP_FPS);
 	if(!cap.isOpened())  // if not success, exit program
 	{
@@ -449,8 +449,8 @@ int main()
 		 Mat colorframe ;
 		 out_capture.write(img);
 		 cout<<endl<<endl<<"*********************************"<<endl ;
-		 // if(frame_counter > 509) 
-		 // 	waitKey();
+		 if(frame_counter > 2600) 
+		 	waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -833,65 +833,9 @@ void Vehicle_Counter( int frame_counter)
 	// Rule book for vehicle counter updation and pushing it to queue  
 	/****************************************************************/
 	else{
-	for(h = 0 ; h < numLanes ; h++){
-		for(i = realNumDivision[h]*virticalNumOfDivisions - 1 ; i >=0 ; i--){ // Reverse : As farthest detected should be pushed first
-				if((isLaneColored[1][h][i]) && (!isLaneColored[0][h][i]))
-				{
-					if(i!=0){
-						if(isLaneColored[0][h][i-1]==0){
-							if(!((isLaneColored[1][h][i+1])|(isLaneColored[1][h][i-1]))){
-								// Constraint on new generation of vehicle
-								std::vector< pair<int , int > >::iterator it=Track[h].begin() ;
-								if(Track[h].empty()/*not for Lane change*/){
-									Vehicle_counter++ ; 
-									Track[h].push_back(make_pair(Vehicle_counter,i)) ;
-									Position[Vehicle_counter].push_back(i) ;
-									lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
-									//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
-								}
-								else
-								{
-									bool isClose = false ;
-									while((it!=Track[h].end()))
-									{
-										if(abs(i - (*it).second) < 4)   // Toggle the threshold in between 2 / 3
-										{
-											isClose = true ;
-											break ;
-										}
-										it++ ;
-									}
-									if(!isClose && i < realNumDivision[h]*virticalNumOfDivisions - 3)
-									{
-										Vehicle_counter ++ ;
-										Track[h].push_back(make_pair(Vehicle_counter,i)) ;
-										Position[Vehicle_counter].push_back(i);
-										lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
-									}
-										
-										// if((*it).second >= 0 )
-										// {
-										// 	if( (i < (*it).second)&&(i < realNumDivision[h]*virticalNumOfDivisions - 3 /*not for Lane change*/)/* Add condiiton for lane change also */)
-										// 	{
-										// 		Vehicle_counter++ ; 
-										// 		Track[h].push_back(make_pair(Vehicle_counter,i)) ;
-										// 		Position[Vehicle_counter].push_back(i) ;
-										// 		lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
-										// 		//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
-
-										// 	}
-										// 	break ;
-
-										// }
-										// it++ ;
-										
-								} 
-						    }
-						}
-					}
-					else
-					{
-						if(!isLaneColored[0][h][i+1]){
+		for(h = 0 ; h < numLanes ; h++)
+		{ i =  0 ;
+					if((isLaneColored[1][h][i]) && (!isLaneColored[0][h][i])/*&&!isLaneColored[0][h][i+1]*/){
 								if(Track[h].empty()/*not for Lane change*/){
 									Vehicle_counter++ ; 
 									Track[h].push_back(make_pair(Vehicle_counter,i)) ;
@@ -920,13 +864,103 @@ void Vehicle_Counter( int frame_counter)
 										lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
 									}
 
-								} 
-						}
-					}
-				}
-		
+							   }
+						} 
 		}
-	}
+	// for(h = 0 ; h < numLanes ; h++){
+	// 	for(i = realNumDivision[h]*virticalNumOfDivisions - 1 ; i >=0 ; i--){ // Reverse : As farthest detected should be pushed first
+	// 			if((isLaneColored[1][h][i]) && (!isLaneColored[0][h][i]))
+	// 			{
+	// 				if(i!=0){
+	// 					if(isLaneColored[0][h][i-1]==0){
+	// 						if(!((isLaneColored[1][h][i+1])|(isLaneColored[1][h][i-1]))){
+	// 							// Constraint on new generation of vehicle
+	// 							std::vector< pair<int , int > >::iterator it=Track[h].begin() ;
+	// 							if(Track[h].empty()/*not for Lane change*/){
+	// 								Vehicle_counter++ ; 
+	// 								Track[h].push_back(make_pair(Vehicle_counter,i)) ;
+	// 								Position[Vehicle_counter].push_back(i) ;
+	// 								lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
+	// 								//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
+	// 							}
+	// 							else
+	// 							{
+	// 								bool isClose = false ;
+	// 								while((it!=Track[h].end()))
+	// 								{
+	// 									if(abs(i - (*it).second) < 4)   // Toggle the threshold in between 2 / 3
+	// 									{
+	// 										isClose = true ;
+	// 										break ;
+	// 									}
+	// 									it++ ;
+	// 								}
+	// 								if(!isClose && i < realNumDivision[h]*virticalNumOfDivisions - 3)
+	// 								{
+	// 									Vehicle_counter ++ ;
+	// 									Track[h].push_back(make_pair(Vehicle_counter,i)) ;
+	// 									Position[Vehicle_counter].push_back(i);
+	// 									lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
+	// 								}
+										
+	// 									// if((*it).second >= 0 )
+	// 									// {
+	// 									// 	if( (i < (*it).second)&&(i < realNumDivision[h]*virticalNumOfDivisions - 3 /*not for Lane change*/)/* Add condiiton for lane change also */)
+	// 									// 	{
+	// 									// 		Vehicle_counter++ ; 
+	// 									// 		Track[h].push_back(make_pair(Vehicle_counter,i)) ;
+	// 									// 		Position[Vehicle_counter].push_back(i) ;
+	// 									// 		lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
+	// 									// 		//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
+
+	// 									// 	}
+	// 									// 	break ;
+
+	// 									// }
+	// 									// it++ ;
+										
+	// 							} 
+	// 					    }
+	// 					}
+	// 				}
+	// 				else
+	// 				{
+						// if(!isLaneColored[0][h][i+1]){
+						// 		if(Track[h].empty()/*not for Lane change*/){
+						// 			Vehicle_counter++ ; 
+						// 			Track[h].push_back(make_pair(Vehicle_counter,i)) ;
+						// 			Position[Vehicle_counter].push_back(i) ;
+						// 			lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
+						// 			//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
+						// 		}
+						// 		else
+						// 		{
+						// 			bool isClose = false ;
+						// 			std::vector< pair<int , int > >::iterator it=Track[h].begin() ;
+						// 			while((it!=Track[h].end()))
+						// 			{
+						// 				if(abs(i - (*it).second) < 4)   // Toggle the threshold in between 2 / 3
+						// 				{
+						// 					isClose = true ;
+						// 					break ;
+						// 				}
+						// 				it++ ;
+						// 			}
+						// 			if(!isClose)
+						// 			{
+						// 				Vehicle_counter ++ ;
+						// 				Track[h].push_back(make_pair(Vehicle_counter,i)) ;
+						// 				Position[Vehicle_counter].push_back(i);
+						// 				lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
+						// 			}
+
+						// 		} 
+	// 					}
+	// 				}
+	// 			}
+		
+	// 	}
+	// }
 	}
 }
 
@@ -977,8 +1011,8 @@ void Lane_Change()
  		{	
  			laneChange = true ;
  			laneChangeL = laneChangeR = true ;
- 			if((*patch).second == realNumDivision[h]*virticalNumOfDivisions - 1)
- 				continue ;
+ 			// if((*patch).second == realNumDivision[h]*virticalNumOfDivisions - 1)
+ 			// 	continue ;
 
  			for(std::vector< pair<int , int> >::iterator vehicle = Track[h].begin() ; vehicle!=Track[h].end();++vehicle)
  			{
@@ -1036,7 +1070,7 @@ void Lane_Change()
  					}
 				} 			
  			}
-
+ 			cout<<"Lane "<<h<<" : "<<laneChange<<" "<<laneChangeL<<" "<<laneChangeR<<endl ;
 			if(laneChange&&(laneChangeL|laneChangeR))
  			{	
 				if(laneChangeL)
@@ -1047,7 +1081,7 @@ void Lane_Change()
  					{
  						for(std::vector< pair<int , int > >::iterator it = patchCentroid[h-1].begin(); it!=patchCentroid[h-1].end();++it)
  						{
- 							if(abs(v1.second - (*patch).second) < 3)
+ 							if(abs(v1.second - (*it).second) < 3)
  							{
  								laneChangeL = false ; 
  								break ;
@@ -1064,7 +1098,7 @@ void Lane_Change()
  					{
   						for(std::vector< pair<int , int > >::iterator it = patchCentroid[h+1].begin(); it!=patchCentroid[h+1].end();++it)
  						{
- 							if(abs(v2.second - (*patch).second) < 3)
+ 							if(abs(v2.second - (*it).second) < 3)
  							{
  								laneChangeR = false ; 
  								break ;
@@ -1073,7 +1107,7 @@ void Lane_Change()
  					}
  				}
  				// Final pushing and poping out of vehicles
-
+ 				cout<<" ::  "<<laneChange<<" "<<laneChangeL<<" "<<laneChangeR<<endl ;
  				if(laneChangeR)
  				{
  					cout<<"Right Lane change of vehicle no. :: "<<v2.first<<" at lane : "<<h<<" from : ("<<v2.second<<" --> "<<(*patch).second<<endl ;
@@ -1195,6 +1229,17 @@ void Vehicle_Localize(int frame_counter)
  			}
  			i++ ;
  		}
+ 	}
+
+ 	cout<<"Printing the patch Centroid"<<endl ;
+ 	for(h = 0 ; h < numLanes ; h++)
+ 	{	
+ 		cout<<"Lane : "<<h<<" :: ";
+ 		for(std::vector< pair<int , int > >::iterator it=patchCentroid[h].begin(); it!=patchCentroid[h].end();++it)
+ 		{
+ 			cout<<(*it).second<<" , ";
+ 		}
+ 		cout<<endl ;
  	}
 
  	Lane_Change();
@@ -1390,16 +1435,21 @@ pair<int , int> calculateCentroid_new(int sublane , int &index , int isVisited[]
  							 		; // cout<<"Lateral shift assumption"
  							else
  								{
- 									doubtPoints.push(searchPoint) ;
- 									isVisited[searchPoint.first][searchPoint.second] = 1 ;
- 									centroid.first = centroid.first + searchPoint.first ;
- 									centroid.second = centroid.second + searchPoint.second ;
- 									if(searchPoint.second > max_index)
- 										max_index = searchPoint.second ;
- 									if(searchPoint.second < min_index)
- 										min_index = searchPoint.second ;
- 									//cout<<"( "<<searchPoint.first<<" , "<<searchPoint.second<<" ) , " ;
- 									connectedPoints++ ;
+ 									if((sublane/3 != searchPoint.first/3)&&(sublane%3 < 2)&&(abs(searchPoint.second-index)>1))
+ 										;
+ 									else
+ 									{
+ 										doubtPoints.push(searchPoint) ;
+ 										isVisited[searchPoint.first][searchPoint.second] = 1 ;
+ 										centroid.first = centroid.first + searchPoint.first ;
+ 										centroid.second = centroid.second + searchPoint.second ;
+ 										if(searchPoint.second > max_index)
+ 											max_index = searchPoint.second ;
+ 										if(searchPoint.second < min_index)
+ 											min_index = searchPoint.second ;
+ 										//cout<<"( "<<searchPoint.first<<" , "<<searchPoint.second<<" ) , " ;
+ 										connectedPoints++ ;
+ 									}
  								}
  						}
  					}

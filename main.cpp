@@ -446,8 +446,8 @@ int main()
 		 Mat colorframe ;
 		 out_capture.write(img);
 		 cout<<endl<<endl<<"*********************************"<<endl ;
-		// if(frame_counter > 520) 
-		 //	waitKey();
+		 if(frame_counter > 509) 
+		 	waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -1098,6 +1098,12 @@ void Lane_Change()
  								Track[h].push_back(make_pair(v2.first,(*patch).second)) ;
  						}
  					}
+ 					cout<<endl<<"After Lane change"<<endl;
+ 					for(std::vector< pair<int , int> >::iterator it = Track[h].begin() ; it!=Track[h].end() ; ++it)
+ 					{
+ 						cout<<(*it).first<<"-->"<<(*it).second<<" , " ;
+ 					}
+ 					cout<<endl; 
  					waitKey() ;
  				}
 
@@ -1129,6 +1135,13 @@ void Lane_Change()
  						}
  				
  			 		}
+
+ 			 		cout<<endl<<"After Lane change"<<endl;
+ 					for(std::vector< pair<int , int> >::iterator it = Track[h].begin() ; it!=Track[h].end() ; ++it)
+ 					{
+ 						cout<<(*it).first<<"-->"<<(*it).second<<" , " ;
+ 					}
+ 					cout<<endl; 
  			 		waitKey() ;
  			 	}
  			 	
@@ -1163,8 +1176,11 @@ void Vehicle_Localize(int frame_counter)
  				{   
  					
  					centroidPoints = calculateCentroid_new(h , i, isVisited) ;
- 					patchCentroid[centroidPoints.first/3].insert(patchCentroid[centroidPoints.first/3].begin() , centroidPoints) ;
- 					// cout<<"Pushed in Lane no. :: "<<centroidPoints.first/3<<endl ;
+ 					if(patchCentroid[centroidPoints.first/3].size()!=0 && ( centroidPoints.second >= patchCentroid[centroidPoints.first/3].front().second))
+ 						patchCentroid[centroidPoints.first/3].insert(patchCentroid[centroidPoints.first/3].begin() , centroidPoints) ;
+ 					else
+ 						patchCentroid[centroidPoints.first/3].push_back(centroidPoints) ;
+ 						// cout<<"Pushed in Lane no. :: "<<centroidPoints.first/3<<endl ;
  					pair<int , int > Imagepoints = subLaneMap[make_pair(centroidPoints.first , centroidPoints.second)] ;
  					for(int x = - 2 ; x < 2 ; x++)
  						for(int y = -2 ; y < 2 ; y++)
@@ -1189,12 +1205,14 @@ void Vehicle_Localize(int frame_counter)
  		{	
  			/********************/
  			// One to one mapping 
- 			//*******************/
+ 			///*******************/
+ 			//cout<<"Lane : "<<h<<"Case 3"<<endl ;
  			vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin() ;
  			for(std::vector< pair<int , int > >::iterator it=Track[h].begin(); it!=Track[h].end();++it)
  			{	
 
  				(*it).second = (*patch).second ;
+ 			//	cout<<(*it).first<<" is getting : "<<(*patch).second<<endl ;
  				Position[(*it).first].push_back((*it).second) ;
  				patch++ ;
  			}
@@ -1309,6 +1327,14 @@ void Vehicle_Localize(int frame_counter)
 
  			}
  		}
+
+ 		// cout<<endl<<"Lane : "<<h<<" : ";
+ 		// for(std::vector< pair<int , int> >::iterator it = Track[h].begin() ; it!=Track[h].end() ; ++it)
+ 		// {
+ 		// 	cout<<(*it).first<<"-->"<<(*it).second<<" , " ;
+ 		// }
+ 		cout<<endl; 
+ 		
  		patchCentroid[h].clear();
  	}
 

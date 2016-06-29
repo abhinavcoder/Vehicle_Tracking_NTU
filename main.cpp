@@ -9,6 +9,7 @@
 /************************************************/
 
 #include <iostream>
+#include <iomanip>
 #include "opencv2/core/core_c.h"
 #include "opencv2/core/core.hpp"
 #include "opencv2/flann/miniflann.hpp"
@@ -137,8 +138,8 @@ float initialLines[2][3];
 int main()
 {	
     //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
-	VideoCapture cap("./Videos/M-30.avi") ;
-	//VideoCapture cap("./Videos/M-30_HD.avi") ;
+	//VideoCapture cap("./Videos/M-30.avi") ;
+	  VideoCapture cap("./Videos/M-30_HD.avi") ;
 	double fps = cap.get(CV_CAP_PROP_FPS);
 	if(!cap.isOpened())  // if not success, exit program
 	{
@@ -165,7 +166,9 @@ int main()
 	bool capSuccess = cap.read(img);
 	capSuccess = cap.read(img) ;
 	//VideoWriter out_capture("./Results/highwayII_Output.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));
-	VideoWriter out_capture("./Results/M-30.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));	
+	//VideoWriter out_capture("./Results/M-30_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);
+	VideoWriter out_capture("./Results/M-30_HD_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);	
+
 	//check whether the image is loaded or not
 	if (!capSuccess) 
 	{
@@ -192,8 +195,8 @@ int main()
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
 		//auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
-		auto_input.open("./Input_Points/Input_Points_M-30.txt");
-		//auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
+		//auto_input.open("./Input_Points/Input_Points_M-30.txt");
+		auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -268,7 +271,7 @@ int main()
 			  system("pause");
 			  return -1;
 		 }
-		
+ 
 		// resizing to 240x320
 		resize(img,img,s);  
 		//greyscaling
@@ -446,8 +449,8 @@ int main()
 		 Mat colorframe ;
 		 out_capture.write(img);
 		 cout<<endl<<endl<<"*********************************"<<endl ;
-		 if(frame_counter > 509) 
-		 	waitKey();
+		 // if(frame_counter > 509) 
+		 // 	waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -959,6 +962,7 @@ void Vehicle_Remove()
 		}
 	}
 }
+
 void Lane_Change()
 {
 	int h , i ;
@@ -1104,7 +1108,7 @@ void Lane_Change()
  						cout<<(*it).first<<"-->"<<(*it).second<<" , " ;
  					}
  					cout<<endl; 
- 					waitKey() ;
+ 					//waitKey() ;
  				}
 
  				if(laneChangeL)
@@ -1142,13 +1146,14 @@ void Lane_Change()
  						cout<<(*it).first<<"-->"<<(*it).second<<" , " ;
  					}
  					cout<<endl; 
- 			 		waitKey() ;
+ 			 		//waitKey() ;
  			 	}
  			 	
  			}
  		}
  	}
 }
+
 void Vehicle_Localize(int frame_counter)
 {
 	int h , i ; 
@@ -1206,13 +1211,11 @@ void Vehicle_Localize(int frame_counter)
  			/********************/
  			// One to one mapping 
  			///*******************/
- 			//cout<<"Lane : "<<h<<"Case 3"<<endl ;
  			vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin() ;
  			for(std::vector< pair<int , int > >::iterator it=Track[h].begin(); it!=Track[h].end();++it)
  			{	
 
  				(*it).second = (*patch).second ;
- 			//	cout<<(*it).first<<" is getting : "<<(*patch).second<<endl ;
  				Position[(*it).first].push_back((*it).second) ;
  				patch++ ;
  			}
@@ -1337,7 +1340,6 @@ void Vehicle_Localize(int frame_counter)
  		
  		patchCentroid[h].clear();
  	}
-
 }
 
 void Vehicle_Tracker(int frame_counter)

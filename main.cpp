@@ -138,14 +138,14 @@ float initialLines[2][3];
 int main()
 {	
     //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
-	//VideoCapture cap("./Videos/M-30.avi") ;
-	 VideoCapture cap("./Videos/M-30_HD.avi") ;
+	VideoCapture cap("./Videos/M-30.avi") ;
+	//VideoCapture cap("./Videos/M-30_HD.avi") ;
 	double fps = cap.get(CV_CAP_PROP_FPS);
 	if(!cap.isOpened())  // if not success, exit program
 	{
 		cout << "Cannot open the video file" << endl;
 		return -1;
-	}
+	}	
     namedWindow("MyWindow",CV_WINDOW_AUTOSIZE); //create a window called "MyVideo"
     // File reading
     ofstream input;
@@ -166,8 +166,8 @@ int main()
 	bool capSuccess = cap.read(img);
 	capSuccess = cap.read(img) ;
 	//VideoWriter out_capture("./Results/highwayII_Output.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));
-	//VideoWriter out_capture("./Results/M-30_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);
-	VideoWriter out_capture("./Results/M-30_HD_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);	
+	VideoWriter out_capture("./Results/M-30_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);
+	//VideoWriter out_capture("./Results/M-30_HD_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);	
 
 	//check whether the image is loaded or not
 	if (!capSuccess) 
@@ -195,8 +195,8 @@ int main()
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
 		//auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
-		//auto_input.open("./Input_Points/Input_Points_M-30.txt");
-		auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
+		auto_input.open("./Input_Points/Input_Points_M-30.txt");
+		//auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -449,8 +449,8 @@ int main()
 		 Mat colorframe ;
 		 out_capture.write(img);
 		 cout<<endl<<endl<<"*********************************"<<endl ;
-		 if(frame_counter > 2600) 
-		 	waitKey();
+		 // if(frame_counter > 2600) 
+			//waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -833,6 +833,7 @@ void Vehicle_Counter( int frame_counter)
 	// Rule book for vehicle counter updation and pushing it to queue  
 	/****************************************************************/
 	else{
+
 		for(h = 0 ; h < numLanes ; h++)
 		{ i =  0 ;
 					if((isLaneColored[1][h][i]) && (!isLaneColored[0][h][i])/*&&!isLaneColored[0][h][i+1]*/){
@@ -867,6 +868,7 @@ void Vehicle_Counter( int frame_counter)
 							   }
 						} 
 		}
+
 	// for(h = 0 ; h < numLanes ; h++){
 	// 	for(i = realNumDivision[h]*virticalNumOfDivisions - 1 ; i >=0 ; i--){ // Reverse : As farthest detected should be pushed first
 	// 			if((isLaneColored[1][h][i]) && (!isLaneColored[0][h][i]))
@@ -925,36 +927,36 @@ void Vehicle_Counter( int frame_counter)
 	// 				}
 	// 				else
 	// 				{
-						// if(!isLaneColored[0][h][i+1]){
-						// 		if(Track[h].empty()/*not for Lane change*/){
-						// 			Vehicle_counter++ ; 
-						// 			Track[h].push_back(make_pair(Vehicle_counter,i)) ;
-						// 			Position[Vehicle_counter].push_back(i) ;
-						// 			lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
-						// 			//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
-						// 		}
-						// 		else
-						// 		{
-						// 			bool isClose = false ;
-						// 			std::vector< pair<int , int > >::iterator it=Track[h].begin() ;
-						// 			while((it!=Track[h].end()))
-						// 			{
-						// 				if(abs(i - (*it).second) < 4)   // Toggle the threshold in between 2 / 3
-						// 				{
-						// 					isClose = true ;
-						// 					break ;
-						// 				}
-						// 				it++ ;
-						// 			}
-						// 			if(!isClose)
-						// 			{
-						// 				Vehicle_counter ++ ;
-						// 				Track[h].push_back(make_pair(Vehicle_counter,i)) ;
-						// 				Position[Vehicle_counter].push_back(i);
-						// 				lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
-						// 			}
+	// 					if(!isLaneColored[0][h][i+1]){
+	// 							if(Track[h].empty()/*not for Lane change*/){
+	// 								Vehicle_counter++ ; 
+	// 								Track[h].push_back(make_pair(Vehicle_counter,i)) ;
+	// 								Position[Vehicle_counter].push_back(i) ;
+	// 								lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
+	// 								//cout<<"Vehicle entered at Lane < "<<h<<"> , Index < "<<i<<" >"<<endl;
+	// 							}
+	// 							else
+	// 							{
+	// 								bool isClose = false ;
+	// 								std::vector< pair<int , int > >::iterator it=Track[h].begin() ;
+	// 								while((it!=Track[h].end()))
+	// 								{
+	// 									if(abs(i - (*it).second) < 4)   // Toggle the threshold in between 2 / 3
+	// 									{
+	// 										isClose = true ;
+	// 										break ;
+	// 									}
+	// 									it++ ;
+	// 								}
+	// 								if(!isClose)
+	// 								{
+	// 									Vehicle_counter ++ ;
+	// 									Track[h].push_back(make_pair(Vehicle_counter,i)) ;
+	// 									Position[Vehicle_counter].push_back(i);
+	// 									lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
+	// 								}
 
-						// 		} 
+	// 							} 
 	// 					}
 	// 				}
 	// 			}
@@ -1107,10 +1109,17 @@ void Lane_Change()
  					}
  				}
  				// Final pushing and poping out of vehicles
+				char text[255]; 
+        		sprintf(text, "Lane Change" );
+
+				CvFont font;
+				cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, 1.0 ,1.0 ,0,1);
  				cout<<" ::  "<<laneChange<<" "<<laneChangeL<<" "<<laneChangeR<<endl ;
  				if(laneChangeR)
  				{
  					cout<<"Right Lane change of vehicle no. :: "<<v2.first<<" at lane : "<<h<<" from : ("<<v2.second<<" --> "<<(*patch).second<<endl ;
+					putText(img, text, cvPoint(subLaneMap[make_pair((*patch).first,(*patch).second)].first ,subLaneMap[make_pair((*patch).first,(*patch).second)].second - 20), 
+          				FONT_HERSHEY_COMPLEX_SMALL, 0.9, cvScalar(0,255,0), 1, CV_AA);
  					for(std::vector< pair<int , int> >::iterator it = Track[h+1].begin() ; it!=Track[h+1].end();++it)
  					{
  						if((*it).first == v2.first)
@@ -1148,6 +1157,8 @@ void Lane_Change()
  				if(laneChangeL)
  				{
  					cout<<"Left Lane change of vehicle no. :: "<<v1.first<<" at lane : "<<h<<" from : ("<<v1.second<<" --> "<<(*patch).second<<endl ;
+					putText(img, text, cvPoint(subLaneMap[make_pair((*patch).first,(*patch).second)].first ,subLaneMap[make_pair((*patch).first,(*patch).second)].second - 20), 
+          				FONT_HERSHEY_COMPLEX_SMALL, 0.9, cvScalar(0,255,0), 1, CV_AA);
 					for(std::vector< pair<int , int> >::iterator it = Track[h-1].begin() ; it!=Track[h-1].end();++it)
  					{
  						if((*it).first == v1.first)
@@ -1368,10 +1379,60 @@ void Vehicle_Localize(int frame_counter)
  			}
  			else
  			{
- 				/**********************************/
- 				// Case : Lane change condition
- 				/**********************************/
- 				// cout<<"Lane change"<<endl ;
+ 				/***************************************************************/
+ 				// Case : New vehicle detection which still hasn't detected ever 
+ 				/***************************************************************/
+ 				cout<<"Track size > Centroid size";
+ 				if(Track[h].size()==0)
+ 				{	
+ 					cout<<"Entering Size == 0";
+ 					for(std::vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin(); patch!=patchCentroid[h].end();++patch)
+ 					{	
+ 						if((*patch).second < 2)
+ 							break ;
+ 						Vehicle_counter++ ;
+ 						Track[h].push_back(make_pair(Vehicle_counter,(*patch).second));
+ 						Position[Vehicle_counter].push_back((*patch).second) ;
+ 					}
+ 				}
+ 				else
+ 				{	
+ 					cout<<"Iterating";
+ 					vector<pair<int , int > > ::iterator vehicle = Track[h].begin() ;
+
+ 					for(std::vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin(); patch!=patchCentroid[h].end();++patch)
+ 					{	
+ 						if((*patch).second < 2)
+ 							break ;
+
+ 						if(vehicle == Track[h].end())
+ 						{	
+
+ 							Vehicle_counter++ ;
+ 							Track[h].push_back(make_pair(Vehicle_counter,(*patch).second)); 
+ 							Position[Vehicle_counter].push_back((*patch).second) ;
+ 						}
+ 						else
+ 						{
+ 							if(((*patch).second > (*vehicle).second)&&(((*patch).second - (*vehicle).second) > 3))
+ 							{
+ 								Vehicle_counter++; 
+ 								Track[h].insert(vehicle , make_pair(Vehicle_counter,(*patch).second));
+ 								Position[Vehicle_counter].push_back((*patch).second) ;
+ 							}
+ 							else
+ 							{
+ 								(*vehicle).second = (*patch).second ;
+ 								Position[(*vehicle).first].push_back((*vehicle).second) ;
+ 								vehicle++ ;
+ 							}
+ 						}
+ 					}
+
+					for(std::vector< pair<int , int > >::iterator it=vehicle; it!=Track[h].end();++it)
+ 							Position[(*it).first].push_back(-1) ;
+
+ 				}
 
  			}
  		}

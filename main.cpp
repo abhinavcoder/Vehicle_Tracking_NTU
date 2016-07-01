@@ -77,7 +77,7 @@ void Vehicle_Counter( int frame_counter);
 void Vehicle_Remove();
 void Vehicle_Localize(int frame_counter);
 void Vehicle_Tracker(int frame_counter);
-void Lane_Change();
+void Lane_Change(int h);
 
 int round(float a);
 pair<int , int> calculateCentroid(int sublane , int &index , int isVisited[][numDivision*virticalNumOfDivisions]) ;
@@ -138,8 +138,8 @@ float initialLines[2][3];
 int main()
 {	
     //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
-	VideoCapture cap("./Videos/M-30.avi") ;
-	//VideoCapture cap("./Videos/M-30_HD.avi") ;
+	//VideoCapture cap("./Videos/M-30.avi") ;
+	VideoCapture cap("./Videos/M-30_HD.avi") ;
 	double fps = cap.get(CV_CAP_PROP_FPS);
 	if(!cap.isOpened())  // if not success, exit program
 	{
@@ -166,8 +166,8 @@ int main()
 	bool capSuccess = cap.read(img);
 	capSuccess = cap.read(img) ;
 	//VideoWriter out_capture("./Results/highwayII_Output.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));
-	VideoWriter out_capture("./Results/M-30_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);
-	//VideoWriter out_capture("./Results/M-30_HD_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);	
+	//VideoWriter out_capture("./Results/M-30_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);
+	VideoWriter out_capture("./Results/M-30_HD_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);	
 
 	//check whether the image is loaded or not
 	if (!capSuccess) 
@@ -195,8 +195,8 @@ int main()
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
 		//auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
-		auto_input.open("./Input_Points/Input_Points_M-30.txt");
-		//auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
+		//auto_input.open("./Input_Points/Input_Points_M-30.txt");
+		 auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -496,6 +496,7 @@ void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 	 }
 	 input.close();
 }
+
 void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 {		
 	/**********************************************************************/
@@ -999,16 +1000,14 @@ void Vehicle_Remove()
 	}
 }
 
-void Lane_Change()
+void Lane_Change(int h)
 {
-	int h , i ;
+	int i ;
  	cout<<"Entering for lane change detection"<<endl ;
  	//pair<int ,int > pt = patchCentroid[0].front();
  	//cout<<pt.first<<" , "<<pt.second<<endl ;
  	bool laneChange , laneChangeR , laneChangeL ;
  	
- 	for( h = 0 ; h < numLanes ; h++)
- 	{
  		for(std::vector<pair<int , int > >::iterator patch = patchCentroid[h].begin() ; patch != patchCentroid[h].end() ; ++patch)
  		{	
  			laneChange = true ;
@@ -1196,7 +1195,7 @@ void Lane_Change()
  			 	
  			}
  		}
- 	}
+ 	
 }
 
 void Vehicle_Localize(int frame_counter)
@@ -1253,7 +1252,13 @@ void Vehicle_Localize(int frame_counter)
  		cout<<endl ;
  	}
 
- 	Lane_Change();
+ 	for(h=0 ; h < numLanes ; h++)
+ 	{
+ 		if((Track[h].size()!=patchCentroid[h].size())|((h>0)&&(Track[h-1].size()!=patchCentroid[h-1].size()))|((h < numLanes-1)&&(Track[h+1].size()!=patchCentroid[h+1].size())))
+ 		{
+ 			Lane_Change(h) ;
+ 		}
+ 	}
  	
 
  	//************** To be changed ******************* 
@@ -1496,7 +1501,7 @@ pair<int , int> calculateCentroid_new(int sublane , int &index , int isVisited[]
  							 		; // cout<<"Lateral shift assumption"
  							else
  								{
- 									if((sublane/3 != searchPoint.first/3)&&(sublane%3 < 2)&&(abs(searchPoint.second-index)>1))
+ 									if((sublane/3 != searchPoint.first/3)&&(sublane%3 < 2)&&((searchPoint.second < index)|(searchPoint.second-index>1)))
  										;
  									else
  									{

@@ -72,7 +72,6 @@ void gridGenerator();
 void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum);
 void varianceCalculator(int a,int counter);
 void varOfVarCalculator(int blockNum,int laneNum);
-void shifter();
 void Vehicle_Counter( int frame_counter);
 void Vehicle_Remove();
 void Vehicle_Localize(int frame_counter);
@@ -341,7 +340,7 @@ int main()
 					grid_count++ ;
 
 				//cout<<"Grid count for Lane : "<<h/3<<" row : "<<i<<" is :: "<<grid_count<<endl ;
-				if(grid_count < 2)
+				if(grid_count < 2 | (!isGridColored[1][h+1][i]))
 					isLaneColored[1][h/3][i] = 0 ;
 			}
 		}

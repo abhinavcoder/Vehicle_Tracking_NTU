@@ -136,9 +136,9 @@ float initialLines[2][3];
 /**************************/
 int main()
 {	
-    //VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
+    VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
 	//VideoCapture cap("./Videos/M-30.avi") ;
-	VideoCapture cap("./Videos/M-30_HD.avi") ;
+	//VideoCapture cap("./Videos/M-30_HD.avi") ;
 	double fps = cap.get(CV_CAP_PROP_FPS);
 	if(!cap.isOpened())  // if not success, exit program
 	{
@@ -164,9 +164,9 @@ int main()
 
 	bool capSuccess = cap.read(img);
 	capSuccess = cap.read(img) ;
-	//VideoWriter out_capture("./Results/highwayII_Output.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));
+	VideoWriter out_capture("./Results/highwayII_Output.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));
 	//VideoWriter out_capture("./Results/M-30_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);
-	VideoWriter out_capture("./Results/M-30_HD_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);	
+	//VideoWriter out_capture("./Results/M-30_HD_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);	
 
 	//check whether the image is loaded or not
 	if (!capSuccess) 
@@ -193,9 +193,9 @@ int main()
 	if(choice)
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
-		//auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
+		auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
 		//auto_input.open("./Input_Points/Input_Points_M-30.txt");
-		 auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
+		//auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -340,7 +340,7 @@ int main()
 					grid_count++ ;
 
 				//cout<<"Grid count for Lane : "<<h/3<<" row : "<<i<<" is :: "<<grid_count<<endl ;
-				if(grid_count < 2 | (!isGridColored[1][h+1][i]))
+				if(grid_count < 2 /*| (!isGridColored[1][h+1][i])*/)
 					isLaneColored[1][h/3][i] = 0 ;
 			}
 		}
@@ -425,7 +425,7 @@ int main()
 		// for(int i = 1 ; i <= Vehicle_counter ; i++ )
 		// 	cout<<"Vehicle # "<<i<<" # is at Lane : "<<VehicleMap[i].first<<" and at index : "<<VehicleMap[i].second<<endl;
   //       cout<<endl;
-
+		cout<<"..................................Vehicle Updated.................................."<<endl ;
         for(h = 0 ; h < numLanes ; h++)
         {	
         	cout<<"Lane : "<<h<<" :: " ;
@@ -441,15 +441,16 @@ int main()
         cout<<endl ;
         
         }
+        cout<<"..................................................................................."<<endl ;
 
 
 
 		 imshow("Current_Image",img);
 		 Mat colorframe ;
 		 out_capture.write(img);
-		 cout<<endl<<endl<<"*********************************"<<endl ;
+		 cout<<endl<<"*********************************End-of-Frame********************************************"<<endl ;
 		 // if(frame_counter > 2600) 
-			//waitKey();
+			waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -839,6 +840,7 @@ void Vehicle_Counter( int frame_counter)
 					if((isLaneColored[1][h][i]) && (!isLaneColored[0][h][i])/*&&!isLaneColored[0][h][i+1]*/){
 								if(Track[h].empty()/*not for Lane change*/){
 									Vehicle_counter++ ; 
+									cout<<"Vehicle : # "<<Vehicle_counter<<" # entered"<<endl ;
 									Track[h].push_back(make_pair(Vehicle_counter,i)) ;
 									Position[Vehicle_counter].push_back(i) ;
 									lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
@@ -860,6 +862,7 @@ void Vehicle_Counter( int frame_counter)
 									if(!isClose)
 									{
 										Vehicle_counter ++ ;
+										cout<<"Vehicle : # "<<Vehicle_counter<<" # entered"<<endl ;
 										Track[h].push_back(make_pair(Vehicle_counter,i)) ;
 										Position[Vehicle_counter].push_back(i);
 										lanechangeMap[Vehicle_counter] = make_pair( false , make_pair(h,h)) ;
@@ -1002,11 +1005,8 @@ void Vehicle_Remove()
 void Lane_Change(int h)
 {
 	int i ;
- 	cout<<"Entering for lane change detection"<<endl ;
- 	//pair<int ,int > pt = patchCentroid[0].front();
- 	//cout<<pt.first<<" , "<<pt.second<<endl ;
  	bool laneChange , laneChangeR , laneChangeL ;
- 	
+ 	cout<<"Entering Lane change detection for Lane :: "<<h<<endl;
  		for(std::vector<pair<int , int > >::iterator patch = patchCentroid[h].begin() ; patch != patchCentroid[h].end() ; ++patch)
  		{	
  			laneChange = true ;
@@ -1070,7 +1070,6 @@ void Lane_Change(int h)
  					}
 				} 			
  			}
- 			cout<<"Lane "<<h<<" : "<<laneChange<<" "<<laneChangeL<<" "<<laneChangeR<<endl ;
 			if(laneChange&&(laneChangeL|laneChangeR))
  			{	
 				if(laneChangeL)
@@ -1212,8 +1211,7 @@ void Vehicle_Localize(int frame_counter)
 
  	pair<int , int> centroidPoints ;
  	int counter ;
- 	cout<<"Printing distance matrix"<<endl ;
- 	 
+ 	cout<<"Calculating the centroid of Patches"<<endl ;
  	for(h=0 ; h < 3*numLanes ; h++)
  	{	i = 0 ;
  		while( i < realNumDivision[h/3]*virticalNumOfDivisions)
@@ -1225,10 +1223,26 @@ void Vehicle_Localize(int frame_counter)
  					
  					centroidPoints = calculateCentroid_new(h , i, isVisited) ;
  					if(patchCentroid[centroidPoints.first/3].size()!=0 && ( centroidPoints.second >= patchCentroid[centroidPoints.first/3].front().second))
- 						patchCentroid[centroidPoints.first/3].insert(patchCentroid[centroidPoints.first/3].begin() , centroidPoints) ;
+ 					{	
+ 						if(abs(patchCentroid[centroidPoints.first/3].front().second - centroidPoints.second) < 3)
+ 						{	
+ 							cout<<"Approximating two close patches"<<endl;
+ 							patchCentroid[centroidPoints.first/3].front().second = (patchCentroid[centroidPoints.first/3].front().second + centroidPoints.second )/2 ; 
+ 						}
+ 						else
+ 							patchCentroid[centroidPoints.first/3].insert(patchCentroid[centroidPoints.first/3].begin() , centroidPoints) ;
+ 					}
  					else
- 						patchCentroid[centroidPoints.first/3].push_back(centroidPoints) ;
+ 					{	
+ 						if((patchCentroid[centroidPoints.first/3].size()!=0)&&(abs(patchCentroid[centroidPoints.first/3].back().second - centroidPoints.second) < 3))	
+ 						{	
+ 							cout<<"Approximating two close patches"<<endl;
+ 							patchCentroid[centroidPoints.first/3].back().second = (patchCentroid[centroidPoints.first/3].back().second + centroidPoints.second )/2 ;
+ 						}
+ 						else
+ 							patchCentroid[centroidPoints.first/3].push_back(centroidPoints) ;
  						// cout<<"Pushed in Lane no. :: "<<centroidPoints.first/3<<endl ;
+ 					}
  					pair<int , int > Imagepoints = subLaneMap[make_pair(centroidPoints.first , centroidPoints.second)] ;
  					for(int x = - 2 ; x < 2 ; x++)
  						for(int y = -2 ; y < 2 ; y++)
@@ -1240,7 +1254,7 @@ void Vehicle_Localize(int frame_counter)
  		}
  	}
 
- 	cout<<"Printing the patch Centroid"<<endl ;
+ 	cout<<"..................................Printing the patch Centroid.................................."<<endl ;
  	for(h = 0 ; h < numLanes ; h++)
  	{	
  		cout<<"Lane : "<<h<<" :: ";
@@ -1250,6 +1264,7 @@ void Vehicle_Localize(int frame_counter)
  		}
  		cout<<endl ;
  	}
+ 	cout<<"................................................................................................"<<endl;
 
  	for(h=0 ; h < numLanes ; h++)
  	{
@@ -1259,7 +1274,7 @@ void Vehicle_Localize(int frame_counter)
  		}
  	}
  	
-
+ 	cout<<"Entering Lane vehicle mapping"<<endl;
  	//************** To be changed ******************* 
  	for( h = 0 ; h < numLanes ; h++)
  	{	
@@ -1271,6 +1286,7 @@ void Vehicle_Localize(int frame_counter)
  			/********************/
  			// One to one mapping 
  			///*******************/
+ 			cout<<" Lane : "<<h<<" (No. of vehicles = No. of patches)"<<endl ;
  			vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin() ;
  			for(std::vector< pair<int , int > >::iterator it=Track[h].begin(); it!=Track[h].end();++it)
  			{	
@@ -1279,8 +1295,6 @@ void Vehicle_Localize(int frame_counter)
  				Position[(*it).first].push_back((*it).second) ;
  				patch++ ;
  			}
- 			
-
  		}
  		else
  		{
@@ -1291,6 +1305,7 @@ void Vehicle_Localize(int frame_counter)
  				//Case 2 : No detection of earlier detected vehicle
  				//Case 3 : Normal mapping
  				/**************************************************/
+ 				cout<<" Lane : "<<h<<" (No. of vehicles > No. of patches)"<<endl ;
  				vector<pair<int , int> >::iterator it  , patch = patchCentroid[h].begin() ;
  				if(patchCentroid[h].size()==0)
  				{
@@ -1386,22 +1401,21 @@ void Vehicle_Localize(int frame_counter)
  				/***************************************************************/
  				// Case : New vehicle detection which still hasn't detected ever 
  				/***************************************************************/
- 				cout<<"Track size > Centroid size";
+ 				cout<<" Lane : "<<h<<" (No. of vehicles < No. of patches)"<<endl ;
  				if(Track[h].size()==0)
  				{	
- 					cout<<"Entering Size == 0";
  					for(std::vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin(); patch!=patchCentroid[h].end();++patch)
  					{	
  						if((*patch).second < 2)
  							break ;
  						Vehicle_counter++ ;
+ 						cout<<" Vehicle : "<<Vehicle_counter<<" added while mapping (Track[h].size()==0 )"<<endl ;
  						Track[h].push_back(make_pair(Vehicle_counter,(*patch).second));
  						Position[Vehicle_counter].push_back((*patch).second) ;
  					}
  				}
  				else
  				{	
- 					cout<<"Iterating";
  					vector<pair<int , int > > ::iterator vehicle = Track[h].begin() ;
 
  					for(std::vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin(); patch!=patchCentroid[h].end();++patch)
@@ -1415,12 +1429,14 @@ void Vehicle_Localize(int frame_counter)
  							Vehicle_counter++ ;
  							Track[h].push_back(make_pair(Vehicle_counter,(*patch).second)); 
  							Position[Vehicle_counter].push_back((*patch).second) ;
+ 							cout<<" Vehicle : "<<Vehicle_counter<<" added while mapping (vehicle == Track[h].end())"<<endl ;
  						}
  						else
  						{
  							if(((*patch).second > (*vehicle).second)&&(((*patch).second - (*vehicle).second) > 3))
  							{
  								Vehicle_counter++; 
+ 								cout<<" Vehicle : "<<Vehicle_counter<<" added while mapping (ideal case)"<<endl ;
  								Track[h].insert(vehicle , make_pair(Vehicle_counter,(*patch).second));
  								Position[Vehicle_counter].push_back((*patch).second) ;
  							}
@@ -1432,10 +1448,8 @@ void Vehicle_Localize(int frame_counter)
  							}
  						}
  					}
-
 					for(std::vector< pair<int , int > >::iterator it=vehicle; it!=Track[h].end();++it)
  							Position[(*it).first].push_back(-1) ;
-
  				}
 
  			}
@@ -1458,6 +1472,7 @@ void Vehicle_Tracker(int frame_counter)
     Vehicle_Counter(frame_counter) ;
     Vehicle_Remove() ;
     Vehicle_Localize(frame_counter); 
+    cout<<"Vehicle Tracking Completed "<<endl ;
     /*****************************************************/
     //Updating previous colored matrix with current matrix
     /*****************************************************/

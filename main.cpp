@@ -10,6 +10,9 @@
 
 #include <iostream>
 #include <iomanip>
+
+#include <boost/math/distributions/exponential.hpp>
+#include "./include/LinearRegression.h"
 #include "opencv2/core/core_c.h"
 #include "opencv2/core/core.hpp"
 #include "opencv2/flann/miniflann.hpp"
@@ -35,6 +38,7 @@
 
 using namespace cv;
 using namespace std;
+using namespace boost ;
 
 /********************************************/
 // Definition of STL : Deque (with iteration)
@@ -69,7 +73,7 @@ float calB(Point p1,Point p2);
 float calC(Point p1,Point p2,float A,float B);
 bool detectPosivite(int a);
 void gridGenerator();
-void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum);
+void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum,int frame_counter);
 void varianceCalculator(int a,int counter);
 void varOfVarCalculator(int blockNum,int laneNum);
 void Vehicle_Counter( int frame_counter);
@@ -131,15 +135,22 @@ Point L[2*numLanes][10];
 int lEnd[2*numLanes];
 float initialLines[2][3];
 
+Point laneWidth[2] ;
+Point knownWidth[2] ;
+
+double fps ;
+bool isFirst ;
 //*************************/
 // Main function definition
 /**************************/
 int main()
 {	
+
     VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
 	//VideoCapture cap("./Videos/M-30.avi") ;
 	//VideoCapture cap("./Videos/M-30_HD.avi") ;
-	double fps = cap.get(CV_CAP_PROP_FPS);
+	fps = cap.get(CV_CAP_PROP_FPS);
+	cout<<fps<<endl; 
 	if(!cap.isOpened())  // if not success, exit program
 	{
 		cout << "Cannot open the video file" << endl;
@@ -161,6 +172,7 @@ int main()
 	int tcounter=0;
 	double avg=0;
 	int backDoneCounter;
+
 
 	bool capSuccess = cap.read(img);
 	capSuccess = cap.read(img) ;
@@ -199,7 +211,7 @@ int main()
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
-        {
+        {	
     		std::stringstream   linestream(line);
     		std::string         value;
             i = 0 ;
@@ -224,10 +236,11 @@ int main()
 
 		imshow("MyWindow",img);
 		for(h=0;h<numLanes*2;h++)
-		{
+		{	
+			isFirst = true ;
 			while(endOfLineDet)
-			{
-				setMouseCallback("MyWindow",CallBackFunc, NULL);
+			{	
+				setMouseCallback("MyWindow",CallBackFunc);
 				waitKey(0); 
 				if(endOfLineDet)
 				{
@@ -241,6 +254,51 @@ int main()
 			i=0;
 		}
     }
+
+    /****************************************/
+    // Getting Lane Width
+    /****************************************/
+
+	cout<<"Getting Lane Width"<<endl;
+    isFirst = true ;
+    i = 0 ;
+	imshow("MyWindow",img);
+
+	while(endOfLineDet)
+	{	
+		setMouseCallback("MyWindow",CallBackFunc);
+		waitKey(0); 
+		if(endOfLineDet)
+		{
+			laneWidth[i]=Point(k,l);
+			cout << "Recorded! Right click and press Enter to finish line "<<"" << endl;
+		}
+		i++;
+	}
+	endOfLineDet=true;
+    cout<<"Lane width line : "<<laneWidth[0]<<" -------> "<<laneWidth[1]<<endl;
+
+    /****************************************/
+    // Getting known width
+    /****************************************/
+    cout<<"Getting known Width"<<endl;
+    isFirst = true ;
+    i = 0 ;
+	imshow("MyWindow",img);
+
+	while(endOfLineDet)
+	{	
+		setMouseCallback("MyWindow",CallBackFunc);
+		waitKey(0); 
+		if(endOfLineDet)
+		{
+			knownWidth[i]=Point(k,l);
+			cout << "Recorded! Right click and press Enter to finish line "<<"" << endl;
+		}
+		i++;
+	}
+	endOfLineDet=true;
+    cout<<"Known width line : "<<knownWidth[0]<<" -------> "<<knownWidth[1];
 
     int frame_counter = 0 ;
 
@@ -260,6 +318,7 @@ int main()
 
 
 	// Video Processing starts 
+		int sum = 0 ;
 	while(1)	
 	{
 		bool capSuccess = cap.read(img);
@@ -284,8 +343,8 @@ int main()
 			for(h=0;h<3*numLanes;h++)
 			{
 				for(i=0;i<realNumDivision[h/3]*virticalNumOfDivisions;i++)
-				{
-					BOIprocessor(GridPoints[h][0][i+1],GridPoints[h][1][i+1],GridPoints[h][1][i],GridPoints[h][0][i],i,h);
+				{	
+					BOIprocessor(GridPoints[h][0][i+1],GridPoints[h][1][i+1],GridPoints[h][1][i],GridPoints[h][0][i],i,h,frame_counter);
 				}
 			}
 			
@@ -315,15 +374,45 @@ int main()
 					isGridColored[1][h][i] = 0 ;
 				}
 			}
+		static vector<double> vararr ;
+
 
 		for(h=0;h<3*numLanes;h++)
 		{
 			for(i=0;i<realNumDivision[h/3]*virticalNumOfDivisions;i++)
-			{
-				BOIprocessor(GridPoints[h][0][i+1],GridPoints[h][1][i+1],GridPoints[h][1][i],GridPoints[h][0][i],i,h);
+			{	
+				BOIprocessor(GridPoints[h][0][i+1],GridPoints[h][1][i+1],GridPoints[h][1][i],GridPoints[h][0][i],i,h,frame_counter);
+
+				if(frame_counter < fps)
+				{
+					float var_diff = abs( backgroundVariance[h][i][0] - backgroundVariance[h][i][1]);
+					//cout<<var_diff<<endl;
+					if(var_diff!=0)
+					{
+						vararr.push_back(var_diff) ;
+						sum += var_diff ;
+					}
+
+				}
+	
 			}
 		}
-		
+
+		if(frame_counter == fps)
+		{	
+			float alpha = (float)sum / (vararr.size()) ;
+			float lambda  = 1/alpha ;
+			boost::math::exponential_distribution<> exponential(lambda) ;
+			std::vector<double> sample;
+			std::sort (vararr.begin(), vararr.end()) ;
+			for(std::vector<double>::iterator it = vararr.begin() ; it!=vararr.end();++it)
+				sample.push_back(boost::math::pdf(exponential,*it)) ;
+
+			std::sort (sample.begin(), sample.end()) ;
+			maxfx = (float)sample.back();
+		}
+
+		cout<<"Maxfx :: "<<maxfx<<endl;
 		/********************************/
 		// New definiton of isLaneColored
 		/********************************/
@@ -470,11 +559,19 @@ void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 	/*********************************************/	
 	ofstream input;
 	input.open("point_store.txt",std::fstream::app);
-     if  ( event == EVENT_LBUTTONDOWN )//Left click detect
+
+     if( event == EVENT_LBUTTONDOWN )//Left click detect
      {
-          cout << "Point - position (" << x << ", " << y << ")" << endl;
+        cout << "Point - position (" << x << ", " << y << ")" << endl;
 		k=(int)x;
 		l=(int)y;
+		static Point pt1 , pt2 ;
+		pt1 = Point(k,l) ;
+		if(isFirst)
+			pt2 = pt1 ;
+		isFirst = false ;
+
+
         input<<x<<" "<<y <<",";
 		//indicating in the image
 		img.at<uchar>(y,x)=255;
@@ -486,6 +583,8 @@ void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 		img.at<uchar>(y+2,x)=255;
 		img.at<uchar>(y,x-2)=255;
 		img.at<uchar>(y,x+2)=255;
+		line(img,pt1, pt2, CV_RGB(0, 255, 255), 1, 8, 0) ;
+		pt2 = pt1 ;
 		imshow("MyWindow",img);
 	 }
 	 else if  ( event == EVENT_RBUTTONDOWN )//Right click detect
@@ -497,12 +596,12 @@ void CallBackFunc(int event, int x, int y, int flags, void* ptr)
 	 input.close();
 }
 
-void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
+void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum,int frame_counter)
 {		
 	/**********************************************************************/
 	//		Please mark ROI in clockwise order
 	/**********************************************************************/
-	//below indicates a BOI thatt is divided into 3
+	//below indicates a BOI that is divided into 3
 	//  p4 * * * p3
 	//   *       *
 	//   *       *
@@ -516,7 +615,6 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 	int ER,EI,EM;
 	double NCC,ratio;
 	float n;
-
 	//line calculation using points
 	
 	//between points p1 and p2
@@ -687,7 +785,7 @@ void BOIprocessor(Point p4,Point p3,Point p2,Point p1,int blockNum,int laneNum)
 		/******************************/
 		// New Kratika's implementation
 		/******************************/
-
+		//cout<<"Maxfx :: "<<maxfx<<endl;
 		deltaV = fabs(varM[laneNum][blockNum] - varI[laneNum][blockNum]) ;
 		float fx =  (1/267.798)*exp(-deltaV/267.798) ;
         if (fx > maxfx)
@@ -1567,7 +1665,59 @@ void gridGenerator()
 	int inti;
 	int minStartingyValue;
 	int maxStartingyValue;
-   				
+   	
+
+   	/*********************/
+   	// Syncing Matlab code
+   	/*********************/
+
+   	//*** Calculating Lane width parameters ***
+
+   	int w = abs(laneWidth[1].x - laneWidth[0].x);
+   	float pp = (laneWidth[0].y - laneWidth[1].y)/(laneWidth[0].x - laneWidth[1].x);
+   	float Aw  = 3.6 ;		
+   	pair<float , float> line[2] ;
+   	float VPx , VPy ;
+   	float Al = 3.6 ;  // Enter the actual length 
+   	//*** Calculating vanishing point of two lane (after curve fitting) ***
+	
+	LinearRegression lane1 , lane2 ;
+
+	//cout<<"Line 1 dataPoints : "<<endl ;
+	for(i = 0 ; i < lEnd[0] ; i++)
+	{	
+		//cout<<L[0][i]<<" , ";	
+		lane1.addDataPoint(L[0][i].x , L[0][i].y ) ;
+	}
+	//cout<<"Line 2 dataPoints : "<<endl ;
+	for(i = 0 ; i < lEnd[1] ; i++)
+	{
+		//cout<<L[1][i]<<" , ";
+		lane2.addDataPoint(L[1][i].x , L[1][i].y );
+	}
+
+	line[0] = lane1.getReport() ;
+	line[1] = lane2.getReport() ;
+	
+	VPx = -1*(line[1].second - line[0].second)/(line[1].first - line[0].first) ;
+	VPy = line[0].first*VPx + line[0].second ;
+
+	cout<<"Intersecting Point of two Lanes is :: "<<VPx<<" && "<<VPy ;
+
+   	//*** Calculating Known length parameters ***
+   	int vf = knownWidth[0].y ; 
+	int vb = knownWidth[1].y ; 
+
+	//*** Getting camera parameters ***
+	float k1 = (vf - VPy)*(vb - VPy)/abs(vf - vb);
+	VPx = VPx - img.cols/2 - 1;
+	VPy = VPy - img.rows/2 - 1;
+    float KV = w*k1*Al/(Aw*VPy);
+    float focal = sqrt((KV*KV) - (VPy*VPy));
+	float phi = atan(-VPy/focal);
+    float theta = atan(-VPx*cos(phi)/focal);
+    float height = focal*Aw*sin(phi)/w*cos(theta);
+   	
    	//finding minimum/maximum y values to find the boarders of all the lanes and readjusting boarders
 	minStartingyValue=L[0][lEnd[0]].y;
 	maxStartingyValue=L[0][0].y;
@@ -1896,7 +2046,7 @@ bool detectPosivite(int a)
 		return false;
 }
 
-//rounding off function
+// rounding off function
 int round(float a)
 {
 	/***********************/

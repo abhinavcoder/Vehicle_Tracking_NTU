@@ -59,7 +59,7 @@ using namespace boost ;
 
 const int numDivision = 4;
 const int virticalNumOfDivisions =3;
-const int numLanes = 4; 
+const int numLanes = 2; 
 
 /*************************/
 // Function initialisation
@@ -140,22 +140,24 @@ Point knownWidth[2] ;
 
 double fps ;
 bool isFirst ;
+
+int tfd[numLanes] = {0} ;
 //*************************/
 // Main function definition
 /**************************/
 int main()
 {	
+    string video_name  = "highwayI_raw" ;  // M-30; highwayII; M-30_HD; highwayI_raw;
 
-    VideoCapture cap("./Videos/highwayII.avi"); // open the video file for reading
-	//VideoCapture cap("./Videos/M-30.avi") ;
-	//VideoCapture cap("./Videos/M-30_HD.avi") ;
+    VideoCapture cap("./Videos/"+video_name+".avi"); // open the video file for reading
 	fps = cap.get(CV_CAP_PROP_FPS);
 	cout<<fps<<endl; 
+
 	if(!cap.isOpened())  // if not success, exit program
 	{
 		cout << "Cannot open the video file" << endl;
 		return -1;
-	}	
+	} 	
     namedWindow("MyWindow",CV_WINDOW_AUTOSIZE); //create a window called "MyVideo"
     // File reading
     ofstream input;
@@ -175,11 +177,9 @@ int main()
 
 
 	bool capSuccess = cap.read(img);
-	capSuccess = cap.read(img) ;
-	VideoWriter out_capture("./Results/highwayII_Output.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));
-	//VideoWriter out_capture("./Results/M-30_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);
-	//VideoWriter out_capture("./Results/M-30_HD_Output.avi", CV_FOURCC('M','J','P','G'), fps, s);	
-
+	cout<<capSuccess;
+	
+	VideoWriter out_capture("./Results/"+video_name+"_Output.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));
 	//check whether the image is loaded or not
 	if (!capSuccess) 
 	{
@@ -205,9 +205,7 @@ int main()
 	if(choice)
 	{   cout<<"Loading"<<endl;
 		ifstream auto_input ; 
-		auto_input.open("./Input_Points/Input_Points_HighwayII.txt") ;
-		//auto_input.open("./Input_Points/Input_Points_M-30.txt");
-		//auto_input.open("./Input_Points/Input_Points_M-30_HD.txt");
+		auto_input.open(("./Input_Points/Input_Points_"+video_name+".txt").c_str()) ;
 		string line ;
 		h = 0 ; 
 		while(getline(auto_input,line))
@@ -229,6 +227,12 @@ int main()
    				h++ ;
 
 		}
+
+		laneWidth[0] = L[0][1] ; 
+		laneWidth[1] = L[1][1] ;
+
+		knownWidth[0] = Point(300,300) ;
+		knownWidth[1] = Point(300,150) ;
 	}
 	// Getting manual input of line points
 	else
@@ -253,52 +257,52 @@ int main()
 			endOfLineDet=true;
 			i=0;
 		}
-    }
 
-    /****************************************/
-    // Getting Lane Width
-    /****************************************/
+    	/****************************************/
+    	// Getting Lane Width
+    	/****************************************/
 
-	cout<<"Getting Lane Width"<<endl;
-    isFirst = true ;
-    i = 0 ;
-	imshow("MyWindow",img);
+		cout<<"Getting Lane Width"<<endl;
+    	isFirst = true ;
+    	i = 0 ;
+		imshow("MyWindow",img);
 
-	while(endOfLineDet)
-	{	
-		setMouseCallback("MyWindow",CallBackFunc);
-		waitKey(0); 
-		if(endOfLineDet)
-		{
-			laneWidth[i]=Point(k,l);
-			cout << "Recorded! Right click and press Enter to finish line "<<"" << endl;
+		while(endOfLineDet)
+		{	
+			setMouseCallback("MyWindow",CallBackFunc);
+			waitKey(0); 
+			if(endOfLineDet)
+			{
+				laneWidth[i]=Point(k,l);
+				cout << "Recorded! Right click and press Enter to finish line "<<"" << endl;
+			}
+			i++;
 		}
-		i++;
-	}
-	endOfLineDet=true;
-    cout<<"Lane width line : "<<laneWidth[0]<<" -------> "<<laneWidth[1]<<endl;
+		endOfLineDet=true;
+    	cout<<"Lane width line : "<<laneWidth[0]<<" -------> "<<laneWidth[1]<<endl;
 
-    /****************************************/
-    // Getting known width
-    /****************************************/
-    cout<<"Getting known Width"<<endl;
-    isFirst = true ;
-    i = 0 ;
-	imshow("MyWindow",img);
+   		/****************************************/
+   	 	// Getting known width
+    	/****************************************/
+    	cout<<"Getting known Width"<<endl;
+    	isFirst = true ;
+    	i = 0 ;
+		imshow("MyWindow",img);
 
-	while(endOfLineDet)
-	{	
-		setMouseCallback("MyWindow",CallBackFunc);
-		waitKey(0); 
-		if(endOfLineDet)
-		{
-			knownWidth[i]=Point(k,l);
-			cout << "Recorded! Right click and press Enter to finish line "<<"" << endl;
+		while(endOfLineDet)
+		{	
+			setMouseCallback("MyWindow",CallBackFunc);
+			waitKey(0); 
+			if(endOfLineDet)
+			{
+				knownWidth[i]=Point(k,l);
+				cout << "Recorded! Right click and press Enter to finish line "<<"" << endl;
+			}
+			i++;
 		}
-		i++;
+		endOfLineDet=true;
+    	cout<<"Known width line : "<<knownWidth[0]<<" -------> "<<knownWidth[1];
 	}
-	endOfLineDet=true;
-    cout<<"Known width line : "<<knownWidth[0]<<" -------> "<<knownWidth[1];
 
     int frame_counter = 0 ;
 
@@ -338,6 +342,9 @@ int main()
 		/**************************************************************/
 		// Getting the desired coordinates of the block after processing
 		/**************************************************************/
+
+		imshow("Raw_image",img);
+
 		if(!backgroundDone)
 		{
 			for(h=0;h<3*numLanes;h++)
@@ -398,7 +405,7 @@ int main()
 			}
 		}
 
-		if(frame_counter == fps)
+		if(frame_counter == 10*fps)
 		{	
 			float alpha = (float)sum / (vararr.size()) ;
 			float lambda  = 1/alpha ;
@@ -416,6 +423,7 @@ int main()
 		/********************************/
 		// New definiton of isLaneColored
 		/********************************/
+
 		for(h=0 ; h<3*numLanes ;h=h+3)
 		{ 
 			for(i=0 ; i<realNumDivision[h/3]*virticalNumOfDivisions;i++)
@@ -430,10 +438,33 @@ int main()
 
 				//cout<<"Grid count for Lane : "<<h/3<<" row : "<<i<<" is :: "<<grid_count<<endl ;
 				if(grid_count < 2 /*| (!isGridColored[1][h+1][i])*/)
-					isLaneColored[1][h/3][i] = 0 ;
+					isLaneColored[1][h/3][i] = 0 ;			
 			}
 		}
 
+		frame_counter++ ;
+		cout<<frame_counter<<endl;
+		// Updating the Traffic flow direction
+		for(h = 0 ; h < numLanes ; h++)
+		{	i = realNumDivision[h]*virticalNumOfDivisions - 1 ;
+			if(tfd[h]==0 && (frame_counter!= 1))
+			{
+				if(isLaneColored[1][h][0]&&(!isLaneColored[0][h][1]))
+				{
+					tfd[h] = 1 ;
+					cout<<"Lane # "<<h<<" # flow is Forward"<<endl ;
+				}
+				else
+				{
+					if(isLaneColored[1][h][i]&&(!isLaneColored[0][h][i-1])&&(!isLaneColored[0][h][i]))
+					{
+						tfd[h] = -1 ;
+						cout<<"Lane # "<<h<<" # flow is Backward"<<endl ;
+					}
+				}
+			}
+		}
+		cout<<"Frame #"<<frame_counter<<"# TFD :"<<tfd[0]<<tfd[1]<<tfd[2]<<tfd[3]<<endl;
 		// cout<<"Vehicles passed : "<<Vehicle_counter<<endl;
 		// clock_t end = clock();
 		// elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -466,11 +497,8 @@ int main()
 		// Vehicle counting and tracking  
 		/*********************************************/  
 		cvtColor(img, img, CV_GRAY2BGR);
-
-		frame_counter++ ;
 		if(Vehicle_Track)
 		{
-			cout<<frame_counter<<endl;
 			Vehicle_Tracker(frame_counter);
 		}
 		

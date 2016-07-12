@@ -59,7 +59,7 @@ using namespace boost ;
 
 const int numDivision = 4;
 const int virticalNumOfDivisions =3;
-const int numLanes = 4; 
+const int numLanes = 2; 
 
 /*************************/
 // Function initialisation
@@ -147,16 +147,17 @@ int tfd[numLanes] = {0} ;
 /**************************/
 int main()
 {	
-    string video_name  = "highwayII" ;  // M-30; highwayII; M-30_HD;
+    string video_name  = "highwayI_raw" ;  // M-30; highwayII; M-30_HD; highwayI_raw;
 
     VideoCapture cap("./Videos/"+video_name+".avi"); // open the video file for reading
 	fps = cap.get(CV_CAP_PROP_FPS);
 	cout<<fps<<endl; 
+
 	if(!cap.isOpened())  // if not success, exit program
 	{
 		cout << "Cannot open the video file" << endl;
 		return -1;
-	}	
+	} 	
     namedWindow("MyWindow",CV_WINDOW_AUTOSIZE); //create a window called "MyVideo"
     // File reading
     ofstream input;
@@ -176,7 +177,8 @@ int main()
 
 
 	bool capSuccess = cap.read(img);
-	capSuccess = cap.read(img) ;
+	cout<<capSuccess;
+	
 	VideoWriter out_capture("./Results/"+video_name+"_Output.avi", CV_FOURCC('M','J','P','G'), fps, Size(img.cols,img.rows));
 	//check whether the image is loaded or not
 	if (!capSuccess) 
@@ -301,6 +303,7 @@ int main()
 		endOfLineDet=true;
     	cout<<"Known width line : "<<knownWidth[0]<<" -------> "<<knownWidth[1];
 	}
+
     int frame_counter = 0 ;
 
     /******************************************/
@@ -339,6 +342,9 @@ int main()
 		/**************************************************************/
 		// Getting the desired coordinates of the block after processing
 		/**************************************************************/
+
+		imshow("Raw_image",img);
+
 		if(!backgroundDone)
 		{
 			for(h=0;h<3*numLanes;h++)
@@ -399,7 +405,7 @@ int main()
 			}
 		}
 
-		if(frame_counter == fps)
+		if(frame_counter == 10*fps)
 		{	
 			float alpha = (float)sum / (vararr.size()) ;
 			float lambda  = 1/alpha ;

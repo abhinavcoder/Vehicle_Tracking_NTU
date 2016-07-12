@@ -1,0 +1,660 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows}
+
+\begin{document}
+	
+	\begin{titlepage}
+		\begin{center}
+			\vspace*{1in}
+			{\huge Traffic Surveillance}
+			\vspace{0.1in}
+			\hrule
+			\vspace{0.1in}
+			\par
+			{\large Vehicle Classification}
+			\par
+			\vspace{1.5in}
+			{\Large Amrut Rajkarne}
+			\par
+			\vspace{0.02in}
+			{\normalsize Indian Institute of Technology Kharagpur}
+			\par
+			\vspace{0.5in}
+			{\large Summer Research Project}
+			\par
+			\vspace{0.5in}
+			Under the guidance of
+			\par
+			Prof. Lam Siew Kei
+			\par
+			PhD. Kratika Garg
+			\par
+			\vspace{0.25in}
+			\graphicspath{ {/home/n1502414k/Traffic_Surveillance/My_Project/} }
+			\includegraphics[scale= 0.125]{NTULogo}
+			\vspace{0.15in}
+			\par
+			School of Computer Science and Engineering,
+			\par
+			Nanyang Techological University, Singapore
+			\par
+			\vspace{0.5in}
+			May - July 2016
+		\end{center}
+	\end{titlepage}
+	
+\pagenumbering{arabic}
+	
+	\newpage
+	\begin{center}
+		\vspace*{1in}
+		{\LARGE Acknowledgement}
+		\vspace{0.1in}
+		\hrule
+		\vspace{0.1in}
+	\end{center}
+	\vspace{0.25in}
+	I take this opportunity to express my profound gratitude and deep regards to my guide \textbf{Kratika Garg} for her exemplary guidance, monitoring and constant encouragement throughout the course of this project. The help and guidance given by her time to time shall carry me a long way in the field of Image Processing.
+	\begin{flushleft}
+	I am also extremely thankful to \textbf{Prof. Lam Siew Kei} for offering me the opportunity to work for summer project at School of Computer Science and Engineering, NTU and for his cordial support and guidance which helped me in completing this internship. 
+	\end{flushleft}
+	\begin{flushleft}
+	I am obliged to staff members of Hardware and Embedded Systems Lab, for the valuable information provided by them in their respective fields. I am grateful for their cooperation during the period of my assignment.
+	\end{flushleft}
+	\vspace{2.5in}
+	
+	\begin{flushleft}
+		\textbf{\textit{Amrut Rajkarne}}
+		\par
+		\textbf{\textit{IIT Kharagpur}}
+	\end{flushleft}
+
+
+\tableofcontents
+
+\newpage
+\section{Introduction}
+
+\vspace{0.1in}
+\textbf{Vehicle classification} has emerged as a significant field of study because of its importance in variety of applications like surveillance, security system, traffic congestion avoidance and accidents prevention etc. So far numerous algorithms have been implemented for
+classifying vehicle. Each algorithm follows different procedures for detecting vehicles from videos. There are basically three main types of vehicles as shown in Table I
+
+\begin{table}[h!]
+	\centering
+	\caption{Vehicle Categories}
+	\label{tab:table1}
+	\vspace{0.1in}
+	\begin{tabular}{|c|c|c|}
+		\hline
+		\ Vehicle Type & Assigned Category & Vehicle Description \\[0.2cm]
+		\hline
+		Light Vehicles & Category-A & Small Cars or Vehicles \\[0.2cm]
+		Intermediate Vehicles & Category-B & Vans, Suzuki, Mini-Bus etc \\[0.2cm]
+		Heavy Vehicles & Category-B & Trucks, Buses etc \\[0.2cm]
+		\hline
+	\end{tabular}
+\end{table}
+
+\begin{flushleft}
+\vspace{0.1in}
+The common techniques are used for the classification of vehicles are - 
+\end{flushleft}
+\begin{itemize}
+\setlength{\itemindent}{.2in}
+\item Background subtraction and Contour Matching
+\item Blob Feature Extraction with Adaptive Background Subtraction
+\item Silhoulette 3-D Modeling
+\item Edge point based classification
+\item Hardware based classification using magnetic or infrared sensors
+\end{itemize}
+
+\vspace{0.1in}
+\begin{flushleft}
+	The various methods proposed above have their own advantages and some even classify vehicles accurately. However most of the techniques use Background subtraction or involve complex hardware. The objective of the study was to develop a classification algorithm as an extension to the existing research on Vehicle Tracking [1]. The feature extraction and classification process needed to be dynamic and computationally efficient for a traffic video as input.
+\end{flushleft}
+
+\newpage
+\section{Literature Survey}
+
+\begin{flushleft}
+	The various methods proposed above have their own advantages and some even classify vehicles accurately. However most of the techniques use Background subtraction or involve complex hardware. The objective of the study was to develop a classification algorithm as an extension to the existing research on Vehicle Tracking [1]. The feature extraction and classification process needed to be dynamic and computationally efficient for a traffic video as input.
+\end{flushleft}
+
+
+\newpage
+\section{Vehicle Tracking}
+
+\vspace{0.1in}
+The method proposed [1] employs variance as a means for detecting the occupancy of vehicles on pre-defined region of interest and has comparable accuracy with existing high complexity holistic methods. As an extension to the existing vehicle tracking approach, centroid-based tracking based on the same concept was introduced to improve the tracking, make it more dynamic and detect lane-changes.
+
+\vspace{0.1in}
+\begin{flushleft}
+The Vehicle Classification approach proposed relies on the centroid-based tracking and extracts the features based on the Region of Interest around each vehicle. Various approaches were implemented as an extension to the tracking method as follows - 
+\end{flushleft}
+
+\begin{itemize}
+\setlength{\itemindent}{.2in}
+\item Contour Detection for each vehicle
+\item Bounding Box Detection for each vehicle
+\item Separating the Saturation layer and extracting vehicle features
+\item Convex Hull / Bounding Ellipse Detection
+\end{itemize}
+	
+\begin{flushleft}
+All the above mentioned approaches were based on the available packages in opencv - findContours, BoundingBox etc. None of the them was a promising approach since each suffered poorly in case of occlusion with road markers, sidewalk or other vehicles. The most problematic scenario was to get correct vehicle dimensions for lanes near to sidewalk and vehicles near road-markers since that leaded to a very high degree of occlusion and the contour detection or convex hull detection resulted in unnecessarily large contours. The approach finally adopted is based on the idea of convolution and generates a box bounding box around a vehicle step-wise using local maxima matching at every step. 
+\end{flushleft}
+
+
+
+\newpage
+\section{Vehicle Classification}
+
+The Vehicle Classification approach adopted is based on the idea of convolution considering local optimum. For each vehicle blob, an approximately fitting rectangular bounding box is generated stepwise. The overview of the entire algorithm can be obtained in the following sections.
+
+\addcontentsline{toc}{section}{4.1 Vehicle Features}
+\section*{\large 4.1 Vehicle Features}
+\vspace{0.1in}
+
+To differentiate vehicles into three categories as mentioned in Table-1 different features can be considered for classification. The study involves considering the most basic set of features -
+
+\begin{itemize}
+\setlength{\itemindent}{.2in}
+\item Vehicle Width
+\item Vehicle Height
+\end{itemize}
+
+\begin{flushleft}
+As an extension to the above features, many other features can be considered like \textbf{fitting an ellipse}, \textbf{image moments}, \textbf{convex-hull perimeter}, \textbf{solidity}, \textbf{compactness} etc however proper extraction techniques need to be devised for each feature. In this study, we have proposed a \textbf{unique approach for extracting} Vehicle Width and Vehicle Height (number of pixels)
+\end{flushleft}
+
+\addcontentsline{toc}{section}{4.2 Feature Extraction}
+\section*{\large 4.2 Feature Extraction}
+\vspace{0.1in}
+
+\begin{flushleft}
+The overall aglorithm for feature extraction can be summarised as -
+\end{flushleft}
+
+\begin{flushleft}
+\textbf{Step 1}: The first step in our algorithm is to generate a custom \textbf{Region of Interest} around each vehicle present in every lane. This is generated based on the centroid of the vehicle obtained from tracking and mapping the centroid to the number of white patches derived from the Tracking Algorithm.
+\end{flushleft}
+
+\begin{flushleft}
+\textbf{Step 2}: On each of the custom generated ROI, we apply \textbf{Canny Edge Detection} algorithm to get the edges for each of the vehicles. The Canny Operator threshold set appropriately to get the best possible outcome.
+\end{flushleft}
+
+\begin{flushleft}
+\textbf{Step 3}: The detected edges are dilated in order to generate a \textbf{vehicle blob}. Erosion follows dilation in order to reduce the occlusion between two vehicles and between vehicle and the surrounding noise
+\end{flushleft}
+
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=white]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
+\begin{figure}[!ht]
+\centering
+\caption{Feature Extraction Algorithm}
+\vspace{0.1in}
+\begin{tikzpicture}[node distance=1.6cm]
+
+\node (node0) [startstop] {Traffic video};
+\node (node1) [startstop, below of = node0] {Vehicle Centroid from Tracking};
+\node (node2) [startstop, below of = node1] {Custom ROI for each vehicle};
+\node (node3) [startstop, below of = node2] {Detect Edges};
+\node (node4) [startstop, below of = node3] {Dilate + Erode};
+\node (node5) [startstop, below of = node4] {Develop Square Box};
+\node (node6) [startstop, below of = node5] {Reduce to Rectangle};
+\node (node7) [startstop, below of = node6] {Extract Vehicle Dimensions};
+
+\draw [arrow] (node0) -- (node1);
+\draw [arrow] (node1) -- (node2);
+\draw [arrow] (node2) -- (node3);
+\draw [arrow] (node3) -- (node4);
+\draw [arrow] (node4) -- (node5);
+\draw [arrow] (node5) -- (node6);
+\draw [arrow] (node6) -- (node7);
+
+\end{tikzpicture}
+
+\end{figure}
+
+\begin{flushleft}
+Once an approximate white vehicle blob is obtained for each vehicle in the corresponding Vehicle ROI, we use a \textbf{convolution based local optimum} concept to generate a bounding rectangle for each vehicle.
+\end{flushleft}
+
+\begin{flushleft}
+\textbf{Step 4}: A square box is developed from the centroid of each vehicle. At each stage the similarity between the white box and the vehicle blob ROI is measured. The dimensions of the square box are increased until a certain level of similarity.
+\end{flushleft}
+
+\begin{flushleft}
+\textbf{Step 5}: In this step the square box is reduced from both ends to get the most optimum rectangular fit for each vehicle. This is based on the idea of local optima obtained in the similarity matching. The dimensions are reduced till a sudden spike is reached which denotes the matching-point.
+\end{flushleft}
+
+\vspace{0.05in}
+\begin{flushleft}
+Once the rectangle is obtained, the width and height of the vehicle are mapped against the corresponding Vehicle ID.
+\end{flushleft}
+
+\addcontentsline{toc}{section}{4.3 Unsupervised Learning}
+\section*{\large 4.3 Unsupervised Learning}
+\vspace{0.1in}
+
+The vehicle features extracted from the traffic video are exported to a csv file for further analysis. Since none of the vehicle labels are known, unsupervised learning approach or \textbf{Clustering} has been used for vehicle classification.
+
+\begin{flushleft}
+The different Clustering algorithms that can be applied :
+\end{flushleft} 
+
+\begin{itemize}
+\setlength{\itemindent}{.2in}
+\item k-Means Clustering
+\item Partioning Around Mediods
+\item Fuzzy c-means Clustering
+\item Hierarchical Clustering
+\end{itemize}
+
+\begin{flushleft}
+The different Clustering algorithms that can be applied :
+\end{flushleft} 
+
+\addcontentsline{toc}{section}{3.4 Implementation}
+\section*{\large 3.4 Implementation}
+\vspace{0.1in}
+
+AKS Primality test determines rigorously in polynomial time whether a number
+is prime or not. Since the algorithm has been presented many efforts are made to
+implement the algorithm. The major challenge is to implement the congruence, which is also most time consuming step in the algorithm. Most of the efforts are focussed on speeding up this congruence check
+
+\begin{flushleft}
+	The basic algorithms used in the implementation are as follows
+\end{flushleft}
+\begin{flushleft}
+	\textbf{\textit{Algorithm Power check (n)}}
+\end{flushleft}
+
+\begin{flushleft}
+	\textbf{\textit{Algorithm Find Root (n,b)}}
+	\(n^{\frac{1}{b}}\) could be calculated by \textbf{integer Newton method}
+\end{flushleft}
+
+\begin{flushleft}
+	\textbf{\textit{Algorithm Largest Factor (p)}}
+\end{flushleft}
+
+As mentioned earlier much efficient algorithms can be implemented but this does not have much effect on the time taken by the algorithm as most of the time is consumed by the congruence For loop.
+
+\begin{flushleft}
+	\textbf{Implementation of the Congruence}
+\end{flushleft}
+
+\begin{flushleft}
+	The evaluation of \((x-a)^n\) using repeated squaring could be represented as
+\end{flushleft}
+
+\begin{center}
+	\(y^n = (((((y^b_{l})^2y^b_{l-1})^2y^b_{l-2})....)^2y^b_{1})^2y^b_{0}\)
+\end{center}
+
+\begin{center}
+	Where \(y=x-a\) , \(n=\sum_{i=0}^{l}b_{i}2^i\) and \(l = \left\lfloor\ logn \right\rfloor +1 \)
+\end{center}
+
+\begin{flushleft}
+	Let P(x) be a polynomial whose nth power is to be computed and PXP(x) be the
+polynomial which contains \(P(x)^2\)  .The following algorithm computes F(x)=\(P(x)^n\).
+\end{flushleft}
+
+\vspace{0.1in}
+\begin{flushleft}
+	\textbf{\textit{Algorithm Square n multiply}}
+\end{flushleft}
+
+We can observe that there is \(\left\lfloor\ logn \right\rfloor\) squaring and at most \(\left\lfloor\ logn \right\rfloor\) multiplication required by the above algorithm
+
+\begin{flushleft}
+	\textbf{Pseudocode for the implementation of congruence through basic polynomial
+multiplication and squaring:}
+\end{flushleft}
+
+\begin{flushleft}
+	Computation of the RHS of the congruence:
+\end{flushleft}
+\((x^n-a)\) can be represented as \((x^r - 1)(x^{n-r} + x^{n-2r} +.....+ x^{n-kr}) + x^{n-kr} - a\)
+
+\begin{flushleft}
+	So the RHS = \(x^{n \hspace{0.1cm} mod \hspace{0.1cm} r} - a \hspace{0.1cm} (mod \hspace{0.2cm} x^r -1,\hspace{0.1cm} n)\) as n-kr is n mod r.
+\end{flushleft}
+
+\begin{flushleft}
+	Computation of the LHS of the congruence
+\end{flushleft}
+
+ \begin{flushleft}
+ 	\(n=\sum_{i=0}^{l}b_{i}2^i\) and \(l = \left\lfloor\ logn \right\rfloor +1 \)
+ \end{flushleft}
+ 
+\begin{flushleft}
+	\(P[0]=-a ; P[1]=1 ; // P(x) = x – a \)
+	\vspace{0.1in}
+\newline
+\(F[0] = 1 ; F[i] = 0 \) for all i;
+\vspace{0.1in}
+\newline
+\(PXP [j] = 0 \) for all j;
+\vspace{0.1in}
+\newline
+\(degF = degPXP = 0;\)
+\vspace{0.05in}
+\newline
+ // degF and degPXP are the degrees of the F(x) and PXP(x) respectively
+\end{flushleft}
+
+\vspace{0.1in}
+\begin{flushleft}
+	If one proceeds by the pseudocode above using “grammar school” multiplication and
+mod methods then the complexity of one iteration becomes \(O(r^2logn(logn)^2)\) and the total complexity of the algorithm becomes \(O(logn)^{19}\).
+\end{flushleft}
+
+\begin{flushleft}
+	But if FFT is used for both polynomial and integer multiplication then the complexity is reduced to \(O(logn)^{12}\), this is due to the fact that \(O(rlogr)\) and \(O(logn)\) steps are used by FFT methods in polynomial and integer multiplication respectively.
+\end{flushleft}
+
+\begin{flushleft}
+	\textbf{Polynomial multiplication using Binary segmentation}
+\end{flushleft}
+
+A very interesting and efficient method of polynomial multiplication if one has large integer multiplication in hand is Binary segmentation (see [5]). Here the polynomial multiplication is achieved by multiplying two integers in which the coefficients are imbedded in binary form between pads of zero.
+
+\begin{center}
+	\(P(x)=\sum_{j=0}^{D-1}p_{j}x^j\) \hspace{0.1cm} \(Q(x)=\sum_{k=0}^{E-1}q_{k}x^k\)
+\end{center}
+
+\begin{center}
+	\(P = 00.... 00 p_{ D-1} 00... p_{D-2} ...0 p_{0}\)
+\end{center}
+
+\begin{center}
+	\(Q = 00.... 00 q_{ E-1} 00... q_{E-2} ...0 q_{0}\)
+\end{center}
+
+In the algorithm multiplication of huge integers is required, so FFT multiplication could be used effectively. One of the efficient FFT technique is given by Schönage in[7] and its implementation is given in detail in [8]. An interesting thing here to notice that squaring of a polynomial is faster than
+multiplication with another polynomial of the same degree, as it requires squaring of an integer. Some FFT methods perform squaring of integer almost 3/2 times faster than multiplication of integers of same bit length.
+
+\vspace{0.1in}
+\begin{flushleft}
+	\textbf{Enhanced powering ladder}
+\end{flushleft}
+
+An enhanced powering ladder can be used instead of ordinary ladder to speed up the performance. In this method the exponent is divided into words of k bits ( k > 1). This method is also known as “windowing”.
+
+\begin{center}
+	\(y^n = (((((y^b_{l})^{2^k}y^b_{l-1})^{2^k}y^b_{l-2})....)^{2^k}y^b_{1})^{2^k}y^b_{0}\)
+\end{center}
+
+\begin{center}
+	Where \(y=x-a\) , \(n=\sum_{i=0}^{l}b_{i}2^i\) and \(l = \left\lfloor\ logn \right\rfloor +1 \)
+\end{center}
+
+So we can see there’ll be \(k(l-1)\) squaring and \((l-1)\) multiplication. So if we increase base size k the computation will be driven towards squaring hence the time consumed will be reduced.
+\vspace{0.1in}
+\newline
+Though high values of k poses a threat to available memory, as all the coefficients of the polynomials from \((x-a)^2\) to \((x-a)^{2^k-1}\)  have to be stored. Though this requirement could be still reduced if we just store the odd values and generate the even powers by their squaring.
+
+\newpage
+\section{Modifications on Original AKS Algorithm}
+
+Chris Caldwell[19] ”We will have to wait for efficient implementations of this algorithm (and hopefully clever restatements of the painful for-loop) to see how it compares to the others for integers of a few thousand digits. Until then, at least we have learned that there is a polynomial-time algorithm for all integers that both is deterministic and relies on no unproved conjectures!”
+
+\begin{flushleft}
+	There are two major approaches which can be used to reduce the complexity time:
+\end{flushleft}
+	\begin{itemize}
+		\setlength{\itemindent}{0.05in}
+		\item Restatement of the \textbf{for loop} to reduce the number of iterations.
+		\item Finding more efficient ways to calculate the \textbf{useful prime r}.
+	\end{itemize}
+	
+\begin{flushleft}
+	The AKS-paper states the following lemma:
+\end{flushleft}
+
+\begin{flushleft}
+	\textbf{Lemma}  Let P (n) denote the greatest prime divisor of n. There exist constants \(c > 0\) and \(n_{0}\) such that for all \(x \geq n_{0}\)
+\end{flushleft}
+
+\begin{center}
+	\(|\hspace{0.1cm} \{p\hspace{0.1cm} |\hspace{0.1cm} p\hspace{0.1cm} is\hspace{0.1cm} prime, p \leq x \hspace{0.1cm} and \hspace{0.1cm} P(p - 1) > x^\frac{2}{3} \}  \geq c \frac{x}{logx}\) .
+\end{center}
+
+\begin{flushleft}
+	An immediate corollary is there are many primes r such that \(P(r-1)>r^\frac{2}{3}\).
+\end{flushleft}
+This property is used in the proof of Lemma which determines there is a suitable \(r = O(log n)^{6}\) . As mentioned, the value of r plays a crucial role in determining the overall complexity of the algorithm. So if a stronger condition can be proved then a smaller value of r can be determined which will consequently reduce the running time of the algorithm.
+
+\addcontentsline{toc}{section}{4.1 Sophie German Conjecture}
+\section*{\large 4.1 Sophie German Conjecture}
+
+\begin{flushleft}
+	\textbf{Sophie German Prime}
+\end{flushleft}
+\begin{flushleft}
+A prime r is said to be a Sophie Germain prime if 2r + 1 is also prime. 
+\vspace{0.1in}
+\newline
+The number of Sophie Germain primes less than n is asymptotic to \(\frac{Dn}{(Logn)^2}\) where D is the twin constant (approximately 0.660161).
+\end{flushleft}
+
+\begin{flushleft}
+	\textbf{Lemma} Assuming the Sophie Germain conjecture (Conjecture 1) there exists suitable r in the range 64\((log n)^2\) to a\((log n)^2\) for all n > \(n_{ 0}\) , where \(n_{ 0}\) and a are positive constants.
+	\newline
+	A proof for the Sophie Germain Conjecture therefore finds \textbf{r = \(O(log n)^2\)}
+\end{flushleft}
+
+
+\addcontentsline{toc}{section}{4.2 Carmichael number Conjecture}
+\section*{\large 4.2 Carmichael number Conjecture}	
+
+\begin{flushleft}
+
+\textbf{Fermat's little theorem} states that if p is a prime number, then for any integer a, the number \(a^p-a\) is an integer multiple of p.
+\vspace{0.1in}
+\newline
+\textbf{Carmichael numbers} are composite numbers which have the same property of modular arithmetic congruence. In fact, Carmichael numbers are also called \textbf{Fermat pseudoprimes} or absolute Fermat pseudoprimes.
+\vspace{0.1in} 
+\newline
+Carmichael numbers are important because they pass the Fermat primality test but are not actually prime. Since Carmichael numbers exist, this primality test cannot be relied upon to prove the primality of a number, although it can still be used to prove a number is composite.
+
+\vspace{0.1in} 
+
+\textbf{Modify selection of r:} It was observed that the congruence is satisfied for some composite numbers (Carmichael numbers). Based on the same, we need to modify the selection of r.
+\end{flushleft}
+
+\addcontentsline{toc}{section}{4.3 Multiplicative Order Conjecture}
+\section*{\large 4.3 Multiplicative Order Conjecture}	
+
+\begin{flushleft}
+	Given an integer a and a positive integer n with gcd(a,n) = 1, the \textbf{multiplicative order \(O_{n}(a)\)} of a modulo n is the smallest positive integer k with \begin{center}
+		\(a^k \equiv 1 \bmod n \)
+	\end{center}
+	
+	In other words, the multiplicative order of a modulo n is the order of a in the multiplicative group of the units in the ring of the integers modulo n.
+	\vspace{0.1in} 
+	\newline
+	\(O_{n}(a)\) always divides \(\phi(n)\). If \(O_{n}(a)\) is actually equal to \(\phi(n)\) and therefore as large as possible, then a is called a \textbf{primitive root} modulo n.
+	\vspace{0.1in} 
+	\newline
+	The order \(O_{n}(a)\) also divides \(\lambda(n)\), a value of the \textbf{Carmichael function}, which is an even stronger statement than the divisibility of \(\phi(n)\).
+	\vspace{0.1in} 
+	\newline
+	\textbf{Modify selection of r:} Instead of finding q as the largest prime factor of r in the original AKS Algorithm, we shall try relate r to the multiplicative order of r modulo n and look for modification that can construct a more useful r.
+\end{flushleft}
+
+\newpage
+\addcontentsline{toc}{section}{4.4 AKS Conjecture Algorithm}
+\section*{\large 4.4 AKS Conjecture Algorithm}
+
+We shall consider the following steps for the conjecture algorithm
+
+\begin{flushleft}
+	\begin{itemize}
+		\setlength{\itemindent}{.2in}
+		\item Algorithm Power Check 
+		\item Useful Prime r (While Loop)
+		\begin{itemize}
+				\setlength{\itemindent}{.2in}
+				\item If (\(gcd(n,r) \neq 1\)) Output COMPOSITE;
+				\item Finding \textbf{Multiplicative Order} \(O_{r}(n)\) to get range of r [Observation Table and Sophie German Conjecture]
+				\item Discarding \textbf{Carmichael Numbers} - Find r, such that r is not divide \(n^2 - 1\) [Observation Table]
+		\end{itemize}
+		\item The value of r from the above algorithm could be used in the congruence \((x-1)^n \not\equiv x^n - 1 \bmod (x^r-1,n)\)
+	\end{itemize}
+\end{flushleft}
+
+\newpage
+\section{Testing and Results}
+
+\addcontentsline{toc}{section}{5.1 Sophie German Conjecture}
+\section*{\large 5.1 Sophie German Conjecture}
+
+We will investigate the Sophie German Conjecture which stated that there exists suitable r in the range \(64(logn)^2\) to \(a(logn)^2\) for all \(n > n_{ 0}\), where \(n_{ 0}\) and a are positive constants. So there should be an constant \(C \geq 64\) such that r = \(C(logn)^2\). A collection of primes from 1 bit to 18 bits was tested and the results are in the following table. N denotes the input number and C denotes the constant.
+
+\begin{table}[h!]
+	\centering
+	\caption{Sophie German Conjecture}
+	\label{tab:table1}
+	\vspace{0.1in}
+	\begin{tabular}{|r|c|}
+		\hline
+		\ N & C \\
+		\hline
+		7 & 0.888 \\
+		709 & 7.906 \\
+		7103 & 43.393 \\
+		11681 & 63.981 \\
+		11689 & 64.015 \\
+		71011 & 65.560 \\
+		710009 & 64.060 \\
+		70999997 & 64.106 \\
+		70000000033 & 64.108 \\
+		700000000009 & 64.018 \\ 
+		7000000000009 & 64.205 \\
+		70000000000009 & 64.041 \\
+		10000000000000061 & 64.141 \\
+		100000000000000003 & 64.011 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\begin{itemize}
+	\setlength{\itemindent}{.1in}
+	\item The value of C has very little variance once it reaches 64.
+	\item The first prime which makes C bigger than 64 is 11689, and the next prime is 11699 which is last prime that AKS algorithm cannot find a useful prime r. 
+	\item \textbf{Once C reaches 64}, the AKS algorithm begins to find a useful prime r and \textbf{reduce the complexity} of the final congruence.
+\end{itemize}
+
+\newpage
+\addcontentsline{toc}{section}{5.2 Carmichael Number Testing}
+\section*{\large 5.2 Carmichael Number Testing}
+
+It was observed that the congruence is satisfied for some composite numbers - \textbf{Carmichael Numbers}. The following table provides few composite number and r, which satisfies the congruence.
+
+\begin{table}[h!]
+	\centering
+	\caption{Carmichael Numbers.}
+	\label{tab:table1}
+	\vspace{0.1in}
+	\begin{tabular}{|c|c|}
+		\hline
+		\ r & n Composite \\
+		\hline
+		2 & 561 \\
+		3 & 1729 \\
+		5 & 252601 \\
+		7 & 1152271 \\
+		11 & 1615681 \\
+		13 & 2508013 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\begin{flushleft}
+	In most of the cases to find whether a number n is prime or not, by AKS Algorithm we usually obtain larger values of r than those mentioned in the table.
+\end{flushleft}
+
+\begin{itemize}
+	\setlength{\itemindent}{.1in}
+	\item Choice of r should overcome the anomaly
+	\item AKS Original Algorithm by its largest prime detection and selection algorithm for r takes care of the issue of Carmichael numbers in most cases
+	\item However we are never certain about large prime numbers and their behaviour.
+	\item \textbf{Conjecture} - It can be observed from the table that \textbf{\(r\)'s divide \(n^2 - 1\)}. So we can directly or indirectly build our selection of r around this.
+	\item The \textbf{Carmichael function} of a positive integer n, denoted \(\lambda(n)\), is defined as the smallest positive integer m such that \(a^m \equiv 1 \pmod{n}\) for every integer a that is coprime to n.
+	\item Carmichael function is also known as the \textbf{reduced Euler totient function}. Clearly Carmichael's theorem is related to Euler's theorem and Fermat's Little Theorem.
+\end{itemize}
+
+\newpage
+\addcontentsline{toc}{section}{5.3 Useful Prime r Testing}
+\section*{\large 5.3 Useful Prime r Testing}
+
+\begin{flushleft}
+	A collection of primes from 1 bit to 18 bits were tested by the above two algorithms and the results are in the following table. N denotes the input number, T denotes time taken to find the useful prime r in milliseconds.
+\end{flushleft}
+
+\begin{table}[h!]
+\centering
+\caption{Testing for Useful Prime r.}
+\label{tab:table1}
+\vspace{0.05in}
+\begin{tabular}{|r|r|c|r|c|}
+\hline
+\ N & AKS Prime r &  T & AKS Modified Prime r & T \\
+\hline
+5 & 5 & 0 & 2 & 0\\
+37 & 37 & 0 & 9 & 0\\
+977 & 37 & 0 & 36 & 0\\
+2909 & 2909 & 0 & 53 & 0\\
+11699 & 11699 & 0 & 91 & 0\\
+11701 & 11699 & 0 & 93 & 0\\
+86599 & 17327 & 1 & 126 & 0\\
+123457 & 18443 & 1 & 128 & 0\\
+2284423 & 28607 & 1 & 224 & 0\\
+96447077 & 45083 & 1 & 348 & 0\\
+484240567 & 53699 & 2 & 398 & 0\\
+1307135101 & 58727 & 2 & 412 & 0\\
+435465768733 & 96059 & 3 & 702 & 0\\
+3435465768991 & 111263 & 6 & 795 & 0\\
+65434218790277 & 134867 & 6 & 970 & 0\\
+700000000000051 & 155699 & 9 & 1168 & 0\\
+7000000000000037 & 177232 & 10 & 1344 & 0\\
+10000000000000061 & 181199 & 11 & 1301 & 0\\
+100000000000000003 & 204143 & 12 & 1536 & 1\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{flushleft}
+	Both tests found r very quickly, but our modification is more faster. On average the useful prime r found by our algorithm is about 130 times smaller than those found in AKS. The first useful r found by AKS original algorithm is when input number n is 11701. The time taken by
+both tests increases very slowly in terms of the bits of the input number n.
+\end{flushleft}
+
+
+
+\newpage
+\begin{thebibliography}{9}
+	\bibitem{Vehicle Tracking}
+	Kratika Garg, Siew-Kei Lam and Thambipillai Srikanthan - Real-time Road Traffic Density Estimation using Block Variance
+	\bibitem{k-Means vs PAM - 1}
+	Comparative Investigation of K-Means and K-Medoid Algorithm on Iris Data - International Journal of Engineering Research and Development - eISSN : 2278-067X, pISSN : 2278-800X - Volume 4, Issue 8
+	\bibitem{k-Means vs PAM - 2}
+	Comparative Analysis between K-Means and K-Medoids for Statistical Clustering - 2015 Third International Conference on Artificial Intelligence, Modelling and Simulation
+	\bibitem{Binary Segmentation}
+	R. Crandall and C. Pomerance. Prime Numbers: A computational Perspective.
+	Springer Verlag, New York, 2001 [Binary Segmentation]
+	\bibitem{Carmichael Numbers}
+	Carmichael, R. D. (1912). American Mathematical Monthly 19 (2): 22-27.
+	\bibitem{NTL Library}
+	Shoup, J. Symbolic Comp. 20:363-397, 1995
+\end{thebibliography}
+
+\end{document}
+

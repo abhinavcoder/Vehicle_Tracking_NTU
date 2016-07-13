@@ -147,7 +147,7 @@ int tfd[numLanes] = {-1,-1} ;
 /**************************/
 int main()
 {	
-    string video_name  = "highwayI_raw" ;  // M-30; highwayII; M-30_HD; highwayI_raw;
+    string video_name  = "bidirectional_1" ;  // M-30; highwayII; M-30_HD; highwayI_raw; bidirectional_1;
 
     VideoCapture cap("./Videos/"+video_name+".avi"); // open the video file for reading
 	fps = cap.get(CV_CAP_PROP_FPS);
@@ -405,19 +405,22 @@ int main()
 	
 			}
 		}
-
+		cout<<" Sum of all variances :: "<<sum<<endl ;
 		if(frame_counter == 10*fps)
 		{	
-			float alpha = (float)sum / (vararr.size()) ;
-			float lambda  = 1/alpha ;
-			boost::math::exponential_distribution<> exponential(lambda) ;
-			std::vector<double> sample;
-			std::sort (vararr.begin(), vararr.end()) ;
-			for(std::vector<double>::iterator it = vararr.begin() ; it!=vararr.end();++it)
-				sample.push_back(boost::math::pdf(exponential,*it)) ;
+			if(sum != 0)
+			{
+				float alpha = (float)sum / (vararr.size()) ;
+				float lambda  = 1/alpha ;
+				boost::math::exponential_distribution<> exponential(lambda) ;
+				std::vector<double> sample;
+				std::sort (vararr.begin(), vararr.end()) ;
+				for(std::vector<double>::iterator it = vararr.begin() ; it!=vararr.end();++it)
+					sample.push_back(boost::math::pdf(exponential,*it)) ;
 
-			std::sort (sample.begin(), sample.end()) ;
-			maxfx = (float)sample.back();
+				std::sort (sample.begin(), sample.end()) ;
+					maxfx = (float)sample.back();
+			}
 		}
 
 		//cout<<"Maxfx :: "<<maxfx<<endl;
@@ -443,15 +446,15 @@ int main()
 			}
 		}
 
-		cout<<endl<<"Printing the colored grid matrix"<<endl ;
-		for(h=0 ; h < 3*numLanes ; h++)
-		{
-			for(i=0 ; i < realNumDivision[h/3]*virticalNumOfDivisions;i++)
-			{
-				cout<<isGridColored[1][h][i]<<" ";
-			}
-			cout<<endl;
-		}
+		// cout<<endl<<"Printing the colored grid matrix"<<endl ;
+		// for(h=0 ; h < 3*numLanes ; h++)
+		// {
+		// 	for(i=0 ; i < realNumDivision[h/3]*virticalNumOfDivisions;i++)
+		// 	{
+		// 		cout<<isGridColored[1][h][i]<<" ";
+		// 	}
+		// 	cout<<endl;
+		// }
 
 		frame_counter++ ;
 		cout<<frame_counter<<endl;
@@ -587,7 +590,7 @@ int main()
 		 out_capture.write(img);
 		 cout<<endl<<"*********************************End-of-Frame********************************************"<<endl ;
 		 // if(frame_counter > 2600) 
-			waitKey();
+			// waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;

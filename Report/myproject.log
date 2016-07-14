@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2016.5.10)  12 JUL 2016 11:29
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2016.5.10)  14 JUL 2016 12:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -413,18 +413,18 @@ ct.toc [1])
 
 [2]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 89.
+(Font)              <12> on input line 92.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 89.
+(Font)              <8> on input line 92.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 89.
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 106.
+(Font)              <6> on input line 92.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 109.
 
  (/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 106.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 109.
  [3] [4] [5]
 [6] [7] [8]
 Missing character: There is no â in font cmr12!
@@ -480,7 +480,7 @@ c/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfon
 ts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cm
 sy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pf
 b>
-Output written on myproject.pdf (18 pages, 341458 bytes).
+Output written on myproject.pdf (18 pages, 341761 bytes).
 PDF statistics:
  116 PDF objects out of 1000 (max. 8388607)
  81 compressed objects within 1 object stream

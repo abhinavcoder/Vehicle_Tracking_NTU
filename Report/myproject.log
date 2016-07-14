@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2015.9.3)  12 JUL 2016 18:42
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2015.9.3)  14 JUL 2016 18:41
 entering extended mode
  %&-line parsing enabled.
 **myproject.tex
@@ -287,7 +287,10 @@ File: pgfmodulematrix.code.tex 2010/08/24  (rcs-revision 1.4)
 (/usr/share/texmf/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarytopat
 hs.code.tex
 File: tikzlibrarytopaths.code.tex 2008/06/17 v2.10 (rcs-revision 1.2)
-)))
+))) (/usr/share/texmf-texlive/tex/latex/comment/comment.sty
+\CommentStream=\write4
+
+Excluding comment 'comment')
 (/usr/share/texmf/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibraryshape
 s.geometric.code.tex
 File: tikzlibraryshapes.geometric.code.tex 2008/01/09 v2.10 (rcs-revision 1.1)
@@ -305,9 +308,6 @@ File: pgflibraryarrows.code.tex 2008/10/27 v2.10 (rcs-revision 1.9)
 \arrowsize=\dimen148
 ))
 (./myproject.aux
-
-LaTeX Warning: Label `tab:table1' multiply defined.
-
 
 LaTeX Warning: Label `tab:table1' multiply defined.
 
@@ -348,26 +348,29 @@ File: NTULogo.png Graphic file (type png)
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./NTULogo.png>] (./myproje
 ct.toc [1])
-\tf@toc=\write4
-\openout4 = `myproject.toc'.
+\tf@toc=\write5
+\openout5 = `myproject.toc'.
 
 
 [2]
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 89.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 89.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 89.
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 106.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 113.
 
  (/usr/share/texmf-texlive/tex/latex/base/omscmr.fd
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 106.
- [3] [4] [5] [6]
-[7] [8]
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 113.
+ [3] [4]
+<Fig1.png, id=28, 776.9025pt x 335.2525pt>
+File: Fig1.png Graphic file (type png)
+ <use Fig1.png> [5 <./Fig1.png (PNG copy)>] [6] [7] [8]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 312.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 312.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 312.
+ [9]
 Missing character: There is no ‚ in font cmr12!
 Missing character: There is no Ä in font cmr12!
 Missing character: There is no ì in font cmr12!
@@ -377,7 +380,7 @@ Missing character: There is no ú in font cmr12!
 Missing character: There is no ‚ in font cmr12!
 Missing character: There is no Ä in font cmr12!
 Missing character: There is no ù in font cmr12!
- [9]
+ [10]
 Missing character: There is no √ in font cmr12!
 Missing character: There is no ∂ in font cmr12!
 Missing character: There is no ‚ in font cmr12!
@@ -389,26 +392,27 @@ Missing character: There is no ù in font cmr12!
 Missing character: There is no ‚ in font cmr12!
 Missing character: There is no Ä in font cmr12!
 Missing character: There is no ô in font cmr12!
- [10]
+ [11] [12]
 Missing character: There is no ‚ in font cmr12!
 Missing character: There is no Ä in font cmr12!
 Missing character: There is no ù in font cmr12!
 Missing character: There is no ‚ in font cmr12!
 Missing character: There is no Ä in font cmr12!
 Missing character: There is no ù in font cmr12!
- [11] [12] [13] [14] [15] [16] [17] (./myproject.aux)
+ [13] [14] [15] [16] [17] [18] [19]
+(./myproject.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 10020 strings out of 495061
- 196401 string characters out of 1182622
- 246343 words of memory out of 3000000
- 13031 multiletter control sequences out of 15000+50000
+ 10048 strings out of 495061
+ 196447 string characters out of 1182622
+ 246571 words of memory out of 3000000
+ 13054 multiletter control sequences out of 15000+50000
  8851 words of font info for 31 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
- 56i,8n,55p,708b,675s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 56i,8n,55p,708b,567s stack positions out of 5000i,500n,10000p,200000b,50000s
 </usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/sha
 re/texmf-texlive/fonts/type1/public/amsfonts/cm/cmbxti10.pfb></usr/share/texmf-
 texlive/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-texlive/fon
@@ -420,9 +424,9 @@ re/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texmf-texl
 ive/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texmf-texlive/fonts/typ
 e1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf-texlive/fonts/type1/public/a
 msfonts/cm/cmsy8.pfb>
-Output written on myproject.pdf (18 pages, 354827 bytes).
+Output written on myproject.pdf (20 pages, 382841 bytes).
 PDF statistics:
- 114 PDF objects out of 1000 (max. 8388607)
+ 122 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 18 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 23 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -590,7 +590,7 @@ int main()
 		 out_capture.write(img);
 		 cout<<endl<<"*********************************End-of-Frame********************************************"<<endl ;
 		 // if(frame_counter > 2600) 
-			// waitKey();
+		 // waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
@@ -1619,18 +1619,11 @@ void Vehicle_Localize(int frame_counter)
 
  					for(std::vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin(); patch!=patchCentroid[h].end();++patch)
  					{	
+ 						cout<<"Vehicle position : ( "<<(*vehicle).first<<" , "<<(*vehicle).second<<" ) "<<"patch : "<<(*patch).second<<endl ;
  						if((*patch).second < 2)
  							break ;
 
- 						if(vehicle == Track[h].end())
- 						{	
-
- 							Vehicle_counter++ ;
- 							Track[h].push_back(make_pair(Vehicle_counter,(*patch).second)); 
- 							Position[Vehicle_counter].push_back((*patch).second) ;
- 							cout<<" Vehicle : "<<Vehicle_counter<<" added while mapping (vehicle == Track[h].end())"<<endl ;
- 						}
- 						else
+ 						if(vehicle!=Track[h].end())
  						{
  							if(((*patch).second > (*vehicle).second)&&(((*patch).second - (*vehicle).second) > 3))
  							{
@@ -1641,24 +1634,41 @@ void Vehicle_Localize(int frame_counter)
  							}
  							else
  							{
+ 								cout<<"Vehicle # "<<(*vehicle).first<<" # mapped from "<<(*vehicle).second<<" to "<<(*patch).second<<endl ;
  								(*vehicle).second = (*patch).second ;
  								Position[(*vehicle).first].push_back((*vehicle).second) ;
  								vehicle++ ;
  							}
  						}
+ 						else
+ 						{
+ 							if( abs((*(vehicle-1)).second - (*patch).second ) <= 3 )
+ 								break;
+
+ 							cout<<"Entering";
+ 							Vehicle_counter++ ;
+ 							Track[h].push_back(make_pair(Vehicle_counter,(*patch).second)); 
+ 							Position[Vehicle_counter].push_back((*patch).second) ;
+ 							cout<<" Vehicle : "<<Vehicle_counter<<" added while mapping (vehicle == Track[h].end()) "<<endl ; 							
+ 							cout<<(*vehicle).first<<endl ;
+ 						}
  					}
-					for(std::vector< pair<int , int > >::iterator it=vehicle; it!=Track[h].end();++it)
- 							Position[(*it).first].push_back(-1) ;
+ 					if(vehicle!=Track[h].end())
+					{	
+						for(std::vector< pair<int , int > >::iterator it=vehicle; it!=Track[h].end();++it)
+ 				 			Position[(*it).first].push_back(-1) ;
+ 					}
  				}
 
  			}
  		}
 
- 		// cout<<endl<<"Lane : "<<h<<" : ";
- 		// for(std::vector< pair<int , int> >::iterator it = Track[h].begin() ; it!=Track[h].end() ; ++it)
- 		// {
- 		// 	cout<<(*it).first<<"-->"<<(*it).second<<" , " ;
- 		// }
+ 		cout<<endl<<"Lane : "<<h<<" : ";
+ 		for(std::vector< pair<int , int> >::iterator it = Track[h].begin() ; it!=Track[h].end() ; ++it)
+ 		{
+ 			cout<<(*it).first<<"-->"<<(*it).second<<" , " ;
+ 		}
+
  		cout<<endl; 
  		
  		patchCentroid[h].clear();

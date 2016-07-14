@@ -1,8 +1,8 @@
 \documentclass[a4paper,12pt]{article}
 \usepackage{graphicx}
 \usepackage{tikz}
+\usepackage{comment}
 \usetikzlibrary{shapes.geometric, arrows}
-
 \begin{document}
 	
 	\begin{titlepage}
@@ -13,10 +13,10 @@
 			\hrule
 			\vspace{0.1in}
 			\par
-			{\large Vehicle Classification}
+			{\large Vehicle Tracking}
 			\par
 			\vspace{1.5in}
-			{\Large Amrut Rajkarne}
+			{\Large Kumar Abhinav}
 			\par
 			\vspace{0.02in}
 			{\normalsize Indian Institute of Technology Kharagpur}
@@ -47,6 +47,9 @@
 	
 \pagenumbering{arabic}
 	
+%................
+%Acknowledgement
+%................
 	\newpage
 	\begin{center}
 		\vspace*{1in}
@@ -56,9 +59,9 @@
 		\vspace{0.1in}
 	\end{center}
 	\vspace{0.25in}
-	I take this opportunity to express my profound gratitude and deep regards to my guide \textbf{Kratika Garg} for her exemplary guidance, monitoring and constant encouragement throughout the course of this project. The help and guidance given by her time to time shall carry me a long way in the field of Image Processing.
+	I take this opportunity to express my profound gratitude and deep regards to my guide \textbf{Kratika Garg} for her exemplary guidance, monitoring and constant encouragement throughout the course of this project. The help and guidance given by her time to time shall carry me a long way in the field of Computer Vision.
 	\begin{flushleft}
-	I am also extremely thankful to \textbf{Prof. Lam Siew Kei} for offering me the opportunity to work for summer project at School of Computer Science and Engineering, NTU and for his cordial support and guidance which helped me in completing this internship. 
+	I take this opportunity to express a deep sense of gratitude to \textbf{Prof. Lam Siew Kei} for offering me the opportunity to work for summer project at School of Computer Science and Engineering, NTU and for his cordial support and guidance which helped me in completing this internship. 
 	\end{flushleft}
 	\begin{flushleft}
 	I am obliged to staff members of Hardware and Embedded Systems Lab, for the valuable information provided by them in their respective fields. I am grateful for their cooperation during the period of my assignment.
@@ -66,56 +69,64 @@
 	\vspace{2.5in}
 	
 	\begin{flushleft}
-		\textbf{\textit{Amrut Rajkarne}}
+		\textbf{\textit{Kumar Abhinav}}
 		\par
 		\textbf{\textit{IIT Kharagpur}}
 	\end{flushleft}
 
+%.........
+%Contents
+%.........
 
 \tableofcontents
 
 \newpage
+
+%.............
+%Introduction
+%.............
+
 \section{Introduction}
 
 \vspace{0.1in}
-\textbf{Vehicle classification} has emerged as a significant field of study because of its importance in variety of applications like surveillance, security system, traffic congestion avoidance and accidents prevention etc. So far numerous algorithms have been implemented for
-classifying vehicle. Each algorithm follows different procedures for detecting vehicles from videos. There are basically three main types of vehicles as shown in Table I
-
-\begin{table}[h!]
-	\centering
-	\caption{Vehicle Categories}
-	\label{tab:table1}
-	\vspace{0.1in}
-	\begin{tabular}{|c|c|c|}
-		\hline
-		\ Vehicle Type & Assigned Category & Vehicle Description \\[0.2cm]
-		\hline
-		Light Vehicles & Category-A & Small Cars or Vehicles \\[0.2cm]
-		Intermediate Vehicles & Category-B & Vans, Suzuki, Mini-Bus etc \\[0.2cm]
-		Heavy Vehicles & Category-B & Trucks, Buses etc \\[0.2cm]
-		\hline
-	\end{tabular}
-\end{table}
+A vision-based detecting and tracking vehicle in
+video streams is an important research in computer
+vision, and it plays an important role in ITS. The aim
+of motion detection is to get the changed region from
+the background image in video sequences, and it is
+very important for targets classification and
+tracking motion objects.
 
 \begin{flushleft}
 \vspace{0.1in}
-The common techniques are used for the classification of vehicles are - 
+The vehicle tracks, or trajectories, are measured over a length of roadway, rather than at a single point,thus it is possible to measure true density instead of simply recording detector occupancy.The additional information from the vehicle trajectories could lead to improved incident
+detection, both by detecting stopped vehicles within the camera's field of view and by identifying
+lane change maneuvers or acceleration/deceleration patterns that are indicative of incidents beyond the camera's field of view. The trajectory data could be used to automate previously labor intensive trajectory studies, such as examining vehicle maneuvers in weaving sections or bottlenecks.
+\end{flushleft}
+
+\begin{flushleft}
+\vspace{0.1in}
+The representative works in vision based vehicle tracking are -
 \end{flushleft}
 \begin{itemize}
 \setlength{\itemindent}{.2in}
-\item Background subtraction and Contour Matching
-\item Blob Feature Extraction with Adaptive Background Subtraction
-\item Silhoulette 3-D Modeling
-\item Edge point based classification
-\item Hardware based classification using magnetic or infrared sensors
+\item Background subtraction and Mean shift algorithm 
+\item Kalman filter based tracking
+\item SVM based particle filtering
+\item Feature based Optical Flow
+\item Spatio-temporal MRF 
 \end{itemize}
 
 \vspace{0.1in}
 \begin{flushleft}
-	The various methods proposed above have their own advantages and some even classify vehicles accurately. However most of the techniques use Background subtraction or involve complex hardware. The objective of the study was to develop a classification algorithm as an extension to the existing research on Vehicle Tracking [1]. The feature extraction and classification process needed to be dynamic and computationally efficient for a traffic video as input.
+The various methods proposed above have their own advantages and some even track vehicles accurately. However existing techniques based on vehicle counting and tracking suffer from low accuracy due to sensitivity to illumination changes, occlusions, congestions etc. In addition, existing holistic-based methods cannot be implemented in real-time due to high computational complexity. The current work on vehicle tracking [1] is a block based holistic approach and employs variance as a means for detecting the occupancy of vehicles on pre-defined blocks . The tracking is done based on the occupancy data of the block . 
 \end{flushleft}
 
 \newpage
+%...................
+% Literature Survey
+%...................
+
 \section{Literature Survey}
 
 \begin{flushleft}
@@ -124,10 +135,25 @@ The common techniques are used for the classification of vehicles are -
 
 
 \newpage
-\section{Vehicle Tracking}
 
-\vspace{0.1in}
-The method proposed [1] employs variance as a means for detecting the occupancy of vehicles on pre-defined region of interest and has comparable accuracy with existing high complexity holistic methods. As an extension to the existing vehicle tracking approach, centroid-based tracking based on the same concept was introduced to improve the tracking, make it more dynamic and detect lane-changes.
+%...........
+%Frame work
+%...........
+\section{Framework}
+\centering
+\vspace{0.25in}
+\includegraphics[scale= 0.425]{Fig1}
+\vspace{0.15in}
+
+\begin{figure}[!ht]
+\centering
+\caption{Tracking Framework}
+\end{figure}
+\vspace{0.07in}
+
+\begin{flushleft}
+The proposed system mainly consists of three steps including Preprocessing, Vehicle processing and Vechile Localisation . The Preprocessing step is Vehicle region extraction based on method [1] employing variance as a means for detecting the occupancy of vehicles on pre-defined region of interest and has comparable accuracy with existing high complexity holistic methods.
+\end{flushleft}
 
 \vspace{0.1in}
 \begin{flushleft}
@@ -189,23 +215,33 @@ The overall aglorithm for feature extraction can be summarised as -
 \textbf{Step 3}: The detected edges are dilated in order to generate a \textbf{vehicle blob}. Erosion follows dilation in order to reduce the occlusion between two vehicles and between vehicle and the surrounding noise
 \end{flushleft}
 
-\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=white]
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=2cm, minimum height=3cm,node distance = 4 cm,text centered, draw=black, fill=white]
 \tikzstyle{arrow} = [thick,->,>=stealth]
+\tikzstyle{blocks} = [ rectangle , minimum width=5cm, minimum height=12cm,node distance = 2 cm,text centered, draw=black, fill=none]
 
-\begin{figure}[!ht]
-\centering
-\caption{Feature Extraction Algorithm}
-\vspace{0.1in}
 \begin{tikzpicture}[node distance=1.6cm]
+\node (node0) [startstop] {Grid Generation};
+\node (node1) [startstop, right of = node0] {Vehicle Counting};
+\node (node2) [startstop, right of = node1] {Patch Centroid};
+%\node (node1) [blocks] {1} ;
+\node (node3) [startstop, below of = node0] {Grid Generation};
+\node (node4) [startstop, right of = node3] {Vehicle Counting};
+\node (node5) [startstop, right of = node4] {Lane Change};
 
+\node (node6) [startstop, below of = node3] {Occupancy Array};
+\node (node7) [startstop, right of = node6] {Vehicle Removal};
+\node (node8) [startstop, right of = node7] {Vehicle Mapping};
+%\draw [arrow] (node0) -- (node1);
+
+\begin{comment}
 \node (node0) [startstop] {Traffic video};
-\node (node1) [startstop, below of = node0] {Vehicle Centroid from Tracking};
-\node (node2) [startstop, below of = node1] {Custom ROI for each vehicle};
+\node (node1) [startstop, left of = node0] {Vehicle Centroid from Tracking};
+\node (node2) [startstop, left of = node1] {Custom ROI for each vehicle};
 \node (node3) [startstop, below of = node2] {Detect Edges};
-\node (node4) [startstop, below of = node3] {Dilate + Erode};
-\node (node5) [startstop, below of = node4] {Develop Square Box};
+\node (node4) [startstop, right of = node3] {Dilate + Erode};
+\node (node5) [startstop, right of = node4] {Develop Square Box};
 \node (node6) [startstop, below of = node5] {Reduce to Rectangle};
-\node (node7) [startstop, below of = node6] {Extract Vehicle Dimensions};
+\node (node7) [startstop, left of = node6] {Extract Vehicle Dimensions};
 
 \draw [arrow] (node0) -- (node1);
 \draw [arrow] (node1) -- (node2);
@@ -214,10 +250,8 @@ The overall aglorithm for feature extraction can be summarised as -
 \draw [arrow] (node4) -- (node5);
 \draw [arrow] (node5) -- (node6);
 \draw [arrow] (node6) -- (node7);
-
+\end{comment}
 \end{tikzpicture}
-
-\end{figure}
 
 \begin{flushleft}
 Once an approximate white vehicle blob is obtained for each vehicle in the corresponding Vehicle ROI, we use a \textbf{convolution based local optimum} concept to generate a bounding rectangle for each vehicle.

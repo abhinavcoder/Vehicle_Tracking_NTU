@@ -3,11 +3,11 @@ Contains code for the current reseach project at *Nanyang Technological Universi
 
 Compile the code :  **g++ -g main.cpp `pkg-config --cflags --libs opencv`** 
 
-Important points :
-1. Edit numLanes and tfd[] before running the code
-2. Give input video feed name in "video_name"
-3. Folders description :
-..* Input_Points : .txt file of all input videos
-..* Videos : All input videos
-..* Results : All output videos
-..* Report : Final report of the project
+#### Important points :
+-1. Edit numLanes and tfd[] before running the code
+-2. Give input video feed name in "video_name"
+-3. Folders description :
+    -* Input_Points : .txt file of all input videos
+    -* Videos : All input videos
+    -* Results : All output videos
+    -* Report : Final report of the project

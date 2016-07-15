@@ -59,7 +59,9 @@ using namespace boost ;
 
 const int numDivision = 4;
 const int virticalNumOfDivisions =3;
-const int numLanes = 2; 
+const int numLanes = 4; 
+
+int tfd[numLanes] = {1,1,1,1}; // Intialize it with "0" , when tfd is automatically generated
 
 /*************************/
 // Function initialisation
@@ -141,13 +143,13 @@ Point knownWidth[2] ;
 double fps ;
 bool isFirst ;
 
-int tfd[numLanes] = {-1,-1} ;
+
 //*************************/
 // Main function definition
 /**************************/
 int main()
 {	
-    string video_name  = "bidirectional_1" ;  // M-30; highwayII; M-30_HD; highwayI_raw; bidirectional_1;
+    string video_name  = "M-30" ;  // M-30; highwayII; M-30_HD; highwayI_raw; bidirectional_1;
 
     VideoCapture cap("./Videos/"+video_name+".avi"); // open the video file for reading
 	fps = cap.get(CV_CAP_PROP_FPS);
@@ -590,7 +592,7 @@ int main()
 		 out_capture.write(img);
 		 cout<<endl<<"*********************************End-of-Frame********************************************"<<endl ;
 		 // if(frame_counter > 2600) 
-		 // waitKey();
+		 waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;

@@ -59,9 +59,9 @@ using namespace boost ;
 
 const int numDivision = 4;
 const int virticalNumOfDivisions =3;
-const int numLanes = 4; 
+const int numLanes = 2; 
 
-int tfd[numLanes] = {1,1,1,1}; // Intialize it with "0" , when tfd is automatically generated
+int tfd[numLanes] = {-1,-1}; // Intialize it with "0" , when tfd is automatically generated
 
 /*************************/
 // Function initialisation
@@ -149,7 +149,7 @@ bool isFirst ;
 /**************************/
 int main()
 {	
-    string video_name  = "M-30" ;  // M-30; highwayII; M-30_HD; highwayI_raw; bidirectional_1;
+    string video_name  = "bidirectional_1" ;  // M-30; highwayII; M-30_HD; highwayI_raw; bidirectional_1;
 
     VideoCapture cap("./Videos/"+video_name+".avi"); // open the video file for reading
 	fps = cap.get(CV_CAP_PROP_FPS);
@@ -591,7 +591,7 @@ int main()
 		 Mat colorframe ;
 		 out_capture.write(img);
 		 cout<<endl<<"*********************************End-of-Frame********************************************"<<endl ;
-		 // if(frame_counter > 2600) 
+		if(frame_counter > 760) 
 		 waitKey();
 		if(waitKey(30) == 27) //wait for 'esc' key press for 30ms. If 'esc' key is pressed, break loop
 		{
@@ -1380,7 +1380,6 @@ void Vehicle_Localize(int frame_counter)
 
  	pair<int , int> centroidPoints ;
  	int counter ;
- 	cout<<endl<<"Calculating the centroid of Patches"<<endl ;
  	for(h=0 ; h < 3*numLanes ; h++)
  	{	i = 0 ;
  		while( i < realNumDivision[h/3]*virticalNumOfDivisions)
@@ -1455,10 +1454,10 @@ void Vehicle_Localize(int frame_counter)
  		}
  	}
 
- 	cout<<"..................................Printing the patch Centroid.................................."<<endl ;
+ 	cout<<endl<<"..................................Printing the patch Centroid.................................."<<endl ;
  	for(h = 0 ; h < numLanes ; h++)
  	{	
- 		cout<<endl<<"Lane : "<<h<<" :: ";
+ 		cout<<"Lane : "<<h<<" :: ";
  		for(std::vector< pair<int , int > >::iterator it=patchCentroid[h].begin(); it!=patchCentroid[h].end();++it)
  		{
  			cout<<(*it).second<<" , ";
@@ -1475,7 +1474,6 @@ void Vehicle_Localize(int frame_counter)
  		}
  	}
  	
- 	cout<<"Entering Lane vehicle mapping"<<endl;
  	//************** To be changed ******************* 
  	for( h = 0 ; h < numLanes ; h++)
  	{	
@@ -1488,6 +1486,7 @@ void Vehicle_Localize(int frame_counter)
  			// One to one mapping 
  			///*******************/
  			//cout<<" Lane : "<<h<<" (No. of vehicles = No. of patches)"<<endl ;
+ 			cout<<"Case : One to one mapping"<<endl;
  			vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin() ;
  			for(std::vector< pair<int , int > >::iterator it=Track[h].begin(); it!=Track[h].end();++it)
  			{	
@@ -1507,12 +1506,14 @@ void Vehicle_Localize(int frame_counter)
  				//Case 3 : Normal mapping
  				/**************************************************/
  				//cout<<" Lane : "<<h<<" (No. of vehicles > No. of patches)"<<endl ;
+ 				cout<<"Case : Vehicles > Patches"<<endl;
  				vector<pair<int , int> >::iterator it  , patch = patchCentroid[h].begin() ;
  				if(patchCentroid[h].size()==0)
  				{
  					for(it=Track[h].begin(); it!=Track[h].end();++it)
  					{
  						Position[(*it).first].push_back(-1) ;
+ 						cout<<"		* "<<(*it).first<<" not detected"<<endl;
  					}
  					continue ;
  				}
@@ -1545,6 +1546,7 @@ void Vehicle_Localize(int frame_counter)
  									if(abs((*vehicle).second - (*patch).second) > 2) 
  									{
  										Position[(*vehicle).first].push_back(-1) ;
+ 										cout<<"		* "<<(*vehicle).first<<" not detected"<<endl;
  									}
  									else
  									{
@@ -1565,8 +1567,10 @@ void Vehicle_Localize(int frame_counter)
  									Position[(*vehicle).first].push_back((*vehicle).second) ;
  								}
  								else
+ 								{	
  									Position[(*vehicle).first].push_back(-1) ;
-
+ 									cout<<"		* "<<(*vehicle).first<<" not detected"<<endl;
+ 								}
  							}
  						}
  						else
@@ -1578,7 +1582,10 @@ void Vehicle_Localize(int frame_counter)
  								Position[(*vehicle).first].push_back((*vehicle).second) ;
  							}
  							else
+ 							{
+ 								cout<<"		* "<<(*vehicle).first<<" not detected"<<endl;
 								Position[(*vehicle).first].push_back(-1) ;
+ 							}
  							
  						}
  					}
@@ -1587,7 +1594,10 @@ void Vehicle_Localize(int frame_counter)
  						// Case 3
  						// To take care of too much shift in the position 
  						if(abs((*vehicle).second - (*patch).second) > 2)
+ 						{
+ 							cout<<"		* "<<(*vehicle).first<<" not detected"<<endl;
  							Position[(*vehicle).first].push_back(-1) ;
+ 						}
  						else
  						{
  							(*vehicle).second = (*patch).second ;
@@ -1603,6 +1613,7 @@ void Vehicle_Localize(int frame_counter)
  				// Case : New vehicle detection which still hasn't detected ever 
  				/***************************************************************/
  				//cout<<" Lane : "<<h<<" (No. of vehicles < No. of patches)"<<endl ;
+ 				cout<<"Case : Patches > Vehicles "<<endl;
  				if(Track[h].size()==0)
  				{	
  					for(std::vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin(); patch!=patchCentroid[h].end();++patch)
@@ -1610,7 +1621,7 @@ void Vehicle_Localize(int frame_counter)
  						if((*patch).second < 2)
  							break ;
  						Vehicle_counter++ ;
- 						cout<<" Vehicle : "<<Vehicle_counter<<" added while mapping (Track[h].size()==0 )"<<endl ;
+ 						cout<<"		* Vehicle : "<<Vehicle_counter<<" added while mapping (Track[h].size()==0 )"<<endl ;
  						Track[h].push_back(make_pair(Vehicle_counter,(*patch).second));
  						Position[Vehicle_counter].push_back((*patch).second) ;
  					}
@@ -1621,7 +1632,7 @@ void Vehicle_Localize(int frame_counter)
 
  					for(std::vector<pair<int , int > > ::iterator patch = patchCentroid[h].begin(); patch!=patchCentroid[h].end();++patch)
  					{	
- 						cout<<"Vehicle position : ( "<<(*vehicle).first<<" , "<<(*vehicle).second<<" ) "<<"patch : "<<(*patch).second<<endl ;
+ 						//cout<<"Vehicle position : ( "<<(*vehicle).first<<" , "<<(*vehicle).second<<" ) "<<"patch : "<<(*patch).second<<endl ;
  						if((*patch).second < 2)
  							break ;
 
@@ -1630,13 +1641,13 @@ void Vehicle_Localize(int frame_counter)
  							if(((*patch).second > (*vehicle).second)&&(((*patch).second - (*vehicle).second) > 3))
  							{
  								Vehicle_counter++; 
- 								cout<<" Vehicle : "<<Vehicle_counter<<" added while mapping (ideal case)"<<endl ;
+ 								cout<<"		* Vehicle : "<<Vehicle_counter<<" added while mapping (ideal case)"<<endl ;
  								Track[h].insert(vehicle , make_pair(Vehicle_counter,(*patch).second));
  								Position[Vehicle_counter].push_back((*patch).second) ;
  							}
  							else
  							{
- 								cout<<"Vehicle # "<<(*vehicle).first<<" # mapped from "<<(*vehicle).second<<" to "<<(*patch).second<<endl ;
+ 								cout<<"		* Vehicle # "<<(*vehicle).first<<" # mapped from "<<(*vehicle).second<<" to "<<(*patch).second<<endl ;
  								(*vehicle).second = (*patch).second ;
  								Position[(*vehicle).first].push_back((*vehicle).second) ;
  								vehicle++ ;
@@ -1647,25 +1658,28 @@ void Vehicle_Localize(int frame_counter)
  							if( abs((*(vehicle-1)).second - (*patch).second ) <= 3 )
  								break;
 
- 							cout<<"Entering";
  							Vehicle_counter++ ;
  							Track[h].push_back(make_pair(Vehicle_counter,(*patch).second)); 
  							Position[Vehicle_counter].push_back((*patch).second) ;
- 							cout<<" Vehicle : "<<Vehicle_counter<<" added while mapping (vehicle == Track[h].end()) "<<endl ; 							
- 							cout<<(*vehicle).first<<endl ;
+ 							cout<<"		* Vehicle : "<<Vehicle_counter<<" added while mapping (vehicle == Track[h].end()) "<<endl ; 					
+ 							//cout<<(*vehicle).first<<endl ;
  						}
  					}
- 					if(vehicle!=Track[h].end())
-					{	
-						for(std::vector< pair<int , int > >::iterator it=vehicle; it!=Track[h].end();++it)
- 				 			Position[(*it).first].push_back(-1) ;
- 					}
+ 					cout<<(*vehicle).first<<endl;
+ 				// 	if(vehicle!=Track[h].end())
+					// {	
+					// 	for(std::vector< pair<int , int > >::iterator it=vehicle; it!=Track[h].end();++it)
+ 				//  		{	
+ 				//  			cout<<"		* "<<(*it).first<<" not detected"<<endl;
+ 				//  			Position[(*it).first].push_back(-1) ;
+ 				// 		}
+ 				// 	}
  				}
 
  			}
  		}
 
- 		cout<<endl<<"Lane : "<<h<<" : ";
+ 		cout<<"	** Lane : "<<h<<" : ";
  		for(std::vector< pair<int , int> >::iterator it = Track[h].begin() ; it!=Track[h].end() ; ++it)
  		{
  			cout<<(*it).first<<"-->"<<(*it).second<<" , " ;
